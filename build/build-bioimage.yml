@@ -157,11 +157,20 @@
             git clone -c feature.manyFiles=true --depth=2 https://github.com/spack/spack.git /usr/local/spack
 
     # Intall Nextflow
-    - name: Ensure Java is installed
+    - name: Install Java 17 (required for Nextflow)
       apt:
-        name: openjdk-11-jdk
+        name: openjdk-17-jdk
         state: present
+      become: yes
       when: ansible_os_family == "Debian"
+
+    - name: Ensure Java 17 is default JVM
+      alternatives:
+        name: java
+        path: /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+      become: yes
+      when: ansible_os_family == "Debian"
+
 
     # Make Nextflowfolder
     - name: Create Nextflow folder
@@ -186,11 +195,12 @@
 
     - name: Verify Nextflow installation
       shell: | 
-        export NXF_DIST=/apps/nextflow/24.10.2/framework
-        export CAPSULE_CACHE_DIR=/apps/nextflow/24.10.2/capsule
-        export PATH=/apps/nextflow/24.10.2/bin:${PATH}
-        nextflow -version
-        chmod 0664 /apps/nextflow/24.10.2/framework/24.10.2/nextflow-24.10.2-one.jar
+          export NXF_VER=24.10.2
+          export NXF_AUTOINSTALL=false
+          export NXF_DIST=/apps/nextflow/24.10.2/framework
+          export CAPSULE_CACHE_DIR=/apps/nextflow/24.10.2/capsule
+          export PATH=/apps/nextflow/24.10.2/bin:${PATH}
+          nextflow -version
       register: nextflow_version
 
     - name: Clean up temporary files
