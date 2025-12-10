@@ -157,17 +157,17 @@
             git clone -c feature.manyFiles=true --depth=2 https://github.com/spack/spack.git /usr/local/spack
 
     # Intall Nextflow
-    - name: Install Java 17 (required for Nextflow)
+    - name: Install Java 21 (required for Nextflow)
       apt:
-        name: openjdk-17-jdk
+        name: openjdk-21-jdk
         state: present
       become: yes
       when: ansible_os_family == "Debian"
 
-    - name: Ensure Java 17 is default JVM
+    - name: Ensure Java 21 is default JVM
       alternatives:
         name: java
-        path: /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+        path: /usr/lib/jvm/java-21-openjdk-amd64/bin/java
       become: yes
       when: ansible_os_family == "Debian"
 
@@ -451,10 +451,6 @@
     - name: setup cvmfs and probe resources
       shell: |
           cvmfs_config setup
-          cvmfs_config probe cvmfs-config.cern.ch 
-          cvmfs_config probe data.biocommons.aarnet.edu.au
-          cvmfs_config probe data.galaxyproject.org
-          cvmfs_config probe singularity.galaxyproject.org
 
     - name: Update PATH to remove /usr/local/games and add /usr/local/spack/bin
       lineinfile:
