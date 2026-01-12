@@ -371,7 +371,7 @@
         dest: /etc/cvmfs/default.local
         content: |
           CVMFS_REPOSITORIES=data.biocommons.aarnet.edu.au,data.galaxyproject.org,singularity.galaxyproject.org
-          CVMFS_HTTP_PROXY='cvmfs-proxy-1.nci.org.au;cvmfs-proxy-2.nci.org.au'
+          CVMFS_HTTP_PROXY='http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128'
           CVMFS_QUOTA_LIMIT=4096
           CVMFS_USE_GEOAPI=yes
 
