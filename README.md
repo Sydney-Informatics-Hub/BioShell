@@ -1,5 +1,20 @@
 # BioImage
-This repository is designed to build a custom Ubuntu-based bioimage and manage instances on NCI Nirin (OpenStack) platform (https://cloud.nci.org.au/).
+
+BioImage is a pre‑configured, cloud‑ready bioinformatics environment designed to make command‑line–based biological data analysis easy to deploy, use, and scale. It provides researchers and training providers with a flexible and cost‑effective platform for running bioinformatics workflows without the overhead of complex system setup or infrastructure management.
+
+### Purpose
+The primary goal of BioImage is to provide:
+
+- A flexible environment that can be adapted to different analysis and training needs
+- A cost‑effective alternative to high‑performance computing for workloads that do not require HPC‑level resources
+- An easy‑to‑deploy and easy‑to‑use command‑line and cloud‑based environment for bioinformatics
+
+BioImage enables users to focus on analysis and training, rather than on system configuration and resource provisioning.
+
+### How BioImage Is Built
+BioImage is built using Packer and Ansible, and is designed to run on OpenStack‑based cloud infrastructure. This approach enables reproducible image builds, consistent configuration, and rapid deployment. The result is a ready‑to‑use virtual machine image that includes commonly used bioinformatics tools, dependencies, and sensible defaults for CLI‑based analysis.
+
+This repository contains configuration and automation for building a custom Ubuntu‑based BioImage and provisioning instances on OpenStack‑compatible cloud environments.
 
 ----------------------------
 ## Table of Contents
@@ -18,9 +33,11 @@ This repository is designed to build a custom Ubuntu-based bioimage and manage i
     * [Install New Tools](#install-new-tools)
     * [Set Up Home Directory](#set-up-home-directory)
 
+
+
 ## Installation
 
-Launch an Ubuntu control host from Nirin Cloud access and clone this repository:
+Launch an Ubuntu control host on an OpenStack cloud and clone this repository:
 ```
 git clone https://github.com/eileen-xue/bioimage.git
 cd bioimage
@@ -28,8 +45,46 @@ cd bioimage
 
 ## Environment
 
+### OpenStack Credentials
+
+Before proceeding, download your OpenStack RC file ([project_id]-openrc.sh) from your cloud provider’s OpenStack dashboard and copy it to the control host (head VM).
+You can download your credentials:
+
+- From the dashboard menu: Project → API Access → Download OpenStack RC File → OpenStack RC File, or
+- From the user menu in the top‑right corner, by selecting OpenStack RC File
+
+This file contains the environment variables required to authenticate with OpenStack from the command line.
+
+### Copying the RC File to the Control Host
+
+If the RC file was downloaded to your local machine, copy it to the control host using scp. If your VM requires an SSH key for access, include the -i option:
+```shell
+scp -i /path/to/your/private_key \
+    /path/to/[project_id]-openrc.sh \    
+    <remote_user>@<control_host_ip>:/path/to/destination/
+```
+Example (template):
+```Shell
+scp -i ~/.ssh/your_ssh_key \ 
+    ~/Downloads/my-project-openrc.sh \
+    ubuntu@<control_host_ip>:/home/ubuntu/bioimage
+```
+Where:
+
+- /path/to/your/private_key is the path to your SSH private key
+- /path/to/[project_id]-openrc.sh is the local path to the downloaded RC file
+- <remote_user> is the username used to access the control host
+- <control_host_ip> is the IP address or hostname of the control host
+- /path/to/destination/ is the target directory on the control host
+
+Once copied, confirm the file is present on the control host before sourcing it during environment activation.
+
 ### Setup
-Install required tools: Packer, Ansible, OpenStack CLI. Download your OpenStack RC file `[project_id]-openrc.sh` from  NCI Cloud Dashboard and run:
+
+The environment requires the following tools:
+- Packer
+- Ansible
+- OpenStack CLI
 
 Run the setup script to install dependencies and configure the environment:
 ```
