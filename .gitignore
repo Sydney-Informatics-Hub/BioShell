@@ -1,0 +1,13 @@
+# Credentials / secrets
+*.pem
+*-openrc.sh
+openrc.sh
+
+# Logs
+*.log
+packerlog.txt
+
+# Virtual environments / local tooling
+openstack_cli/
+.venv/
+venv/
