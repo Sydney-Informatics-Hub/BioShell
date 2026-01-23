@@ -21,6 +21,7 @@ This repository contains configuration and automation for building a custom Ubun
 ----------------------------
 * [Installation](#installation)
 * [Environment](#environment)
+    * [Downloading openstack credentials](#openstack-credentials)
     * [Setup](#setup)
     * [Activation](#activation)
 * [Build Image](#build-image)
@@ -47,11 +48,12 @@ cd bioimage
 
 ### OpenStack Credentials
 
-Before proceeding, download your OpenStack RC file ([project_id]-openrc.sh) from your cloud provider’s OpenStack dashboard and copy it to the control host (head VM).
-You can download your credentials:
+Before proceeding, download your OpenStack RC file, `[project_id]-openrc.sh`, from your cloud provider’s OpenStack dashboard and copy it to the control host (head VM).
 
-- From the dashboard menu: Project → API Access → Download OpenStack RC File → OpenStack RC File, or
-- From the user menu in the top‑right corner, by selecting OpenStack RC File
+You can download your credentials from:
+
+- the dashboard menu: `Project → API Access → Download OpenStack RC File → OpenStack RC File`, or
+- the user drop-down menu in the top‑right corner, by selecting `⇩ OpenStack RC File`
 
 This file contains the environment variables required to authenticate with OpenStack from the command line.
 
@@ -71,11 +73,11 @@ scp -i ~/.ssh/your_ssh_key \
 ```
 Where:
 
-- /path/to/your/private_key is the path to your SSH private key
-- /path/to/[project_id]-openrc.sh is the local path to the downloaded RC file
-- <remote_user> is the username used to access the control host
-- <control_host_ip> is the IP address or hostname of the control host
-- /path/to/destination/ is the target directory on the control host
+- `/path/to/your/private_key` is the path to your SSH private key
+- `/path/to/[project_id]-openrc.sh` is the local path to the downloaded RC file
+- `<remote_user>` is the username used to access the control host
+- `<control_host_ip>` is the IP address or hostname of the control host
+- `/path/to/destination/` is the target directory on the control host
 
 Once copied, confirm the file is present on the control host before sourcing it during environment activation.
 
@@ -119,34 +121,6 @@ After the build process is complete, verify the newly created image by running:
 ```
 openstack image list | grep bioimage
 ```
-The image should include the following applications:
-- Singularity
-- SHPC
-- Spack
-- Ansible
-- Jupyter Notebook
-- RStudio
-- Nextflow
-- Snakemake
-- CernVM-FS client
-
-Check available modules with:
-```
-module avail
-```
-
-To use an application, load it with:
-```
-module load <app>
-```
-
-Access CVMFS repositories:
-```
-ls /cvmfs/data.biocommons.aarnet.edu.au
-ls /cvmfs/data.galaxyproject.org
-ls /cvmfs/singularity.galaxyproject.org
-
-```
 
 ## Instance Management
 
@@ -181,6 +155,44 @@ Stop instances when they are not in use and restart them as needed.
 ./openstack/instances-start.sh <VM-prefix>
 ./openstack/instances-stop.sh <VM-prefix>
 ```
+
+### Tools available in Bioimage
+
+#### modules
+
+The image should include the following applications:
+- Singularity
+- SHPC
+- Spack
+- Ansible
+- Jupyter Notebook
+- RStudio
+- Nextflow
+- Snakemake
+- CernVM-FS client
+
+Check available modules with:
+```
+module avail
+```
+
+To use an application, load it with:
+```
+module load <app>
+```
+#### CernVM-FS (CVMFS)
+
+This image uses CernVM-FS (CVMFS) to provide access to shared bioinformatics software and datasets without installing them locally on the VM.
+
+Access CVMFS repositories:
+```
+ls /cvmfs/data.biocommons.aarnet.edu.au
+ls /cvmfs/data.galaxyproject.org
+ls /cvmfs/singularity.galaxyproject.org
+
+```
+For an explanation of what CVMFS is, how it works, and how it is used in BioImage, see [CVMFS documentation](docs/cvmfs.md).
+
 
 ## User Access 
 
