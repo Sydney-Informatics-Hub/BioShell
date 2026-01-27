@@ -187,10 +187,10 @@ Run the setup script to install dependencies and configure the environment:
 ```
 
 ### Activation
-Activate the environment before proceeding with image builds or instance management:
+To use your OpenStack credentials, load the RC file into your shell environment using source:
 ```
 source openstack_cli/bin/activate
-source [project_id]-openrc.sh
+source /path/to/[project_id]-openrc.sh
 ```
 
 ## Build Image
@@ -201,6 +201,15 @@ Navigate to the `build` directory and initialize the Packer plugins:
 cd bioimage/build
 packer init .
 ```
+You will be prompted:
+```
+Please enter your OpenStack Password for project [project_id] as [username]:
+```
+Enter your OpenStack password. If the command succeeds, no output will be shown. You can verify that the credentials were loaded by checking one of the OpenStack environment variables:
+```
+echo $OS_PROJECT_NAME
+```
+If a project name is returned, your OpenStack environment is configured correctly and ready for use. If it is blank, you may have made a mistake or put in the wrong password. Make sure you are using the right password and try again.
 
 ### Step 2: Build the BioImage
 Run the following command to build the bioimage:
