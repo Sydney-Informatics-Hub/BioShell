@@ -40,7 +40,7 @@ This repository contains configuration and automation for building a custom Ubun
 
 Launch an Ubuntu control host on an OpenStack cloud and clone this repository:
 ```
-git clone https://github.com/eileen-xue/bioimage.git
+git clone https://github.com/AustralianBioCommons/bioimage
 cd bioimage
 ```
 
