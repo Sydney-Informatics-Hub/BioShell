@@ -1,13 +1,6 @@
 # BioImage
 
-BioImage is a pre‑configured, cloud‑ready bioinformatics environment designed to make command‑line–based biological data analysis easy to deploy, use, and scale. It provides researchers and training providers with a flexible and cost‑effective platform for running bioinformatics workflows without the overhead of complex system setup or infrastructure management.
-
-### Purpose
-The primary goal of BioImage is to provide:
-
-- A flexible environment that can be adapted to different analysis and training needs
-- A cost‑effective alternative to high‑performance computing for workloads that do not require HPC‑level resources
-- An easy‑to‑deploy and easy‑to‑use command‑line and cloud‑based environment for bioinformatics
+BioImage is a pre‑configured, cloud‑ready bioinformatics environment designed to make command‑line–based biological data analysis easy to deploy, use, and scale. The primary goal of BioImage is to provide researchers and training providers with a flexible and cost‑effective platform for running bioinformatics workflows without the overhead of complex system setup or infrastructure management.
 
 BioImage enables users to focus on analysis and training, rather than on system configuration and resource provisioning.
 
