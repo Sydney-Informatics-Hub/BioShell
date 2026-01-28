@@ -19,6 +19,7 @@ This repository contains configuration and automation for building a custom Ubun
     * [Setup](#setup)
     * [Activation](#activation)
 * [Build Image](#build-image)
+* [Using the BioImage](#Using-the-BioImage)
 
 ## Spinning up a VM in OpenStack
 
@@ -197,13 +198,151 @@ packer init .
 ```
 
 ### Step 2: Build the BioImage
-Run the following command to build the bioimage:
+
+Before running the build, review and update `openstack-bioimage.pkr.hcl` to ensure the values match your OpenStack environment.
+
+At a minimum, check the following fields in the `source "openstack"` block:
+#### Source Image (Base OS)
+Use this to find a suitable Ubuntu image to use as the build source:
+```
+openstack image list
+```
+Example output:
+```
++--------------------------------------+-------------------------------+--------+
+| ID                                   | Name                          | Status |
++--------------------------------------+-------------------------------+--------+
+| <uuid>                               | Ubuntu 20.04                  | active |
++--------------------------------------+-------------------------------+--------+
+```
+Copy the ID of the image you want to use and set it as:
+```
+source_image = "<ubuntu-image-uuid>"
+```
+
+#### Flavor
+Choose a flavor with enough resources to build the image (at least 10 GB RAM is recommended):
+```
+openstack flavor list
+```
+Example output:
+```
++--------------------------------------+-------------+-------+------+-------+
+| ID                                   | Name        | RAM   | Disk | VCPUs |
++--------------------------------------+-------------+-------+------+-------+
+| <uuid>                               | build.small |  8192 |  20  |   4   |
+| <uuid>                               | build.large | 16384 |  20  |   8   |
++--------------------------------------+-------------+-------+------+-------+
+```
+Update the configuration:
+```
+flavor = "<flavor-name>"
+```
+#### Availability Zone (if applicable)
+Some clouds require an availability zone to be specified:
+```
+openstack availability zone list
+```
+Example output:
+```
++-------------+-----------+
+| Zone Name   | Status    |
++-------------+-----------+
+| zone-a      | available |
+| zone-b      | available |
++-------------+-----------+
+
+```
+Update (or omit if not required):
+```
+availability_zone = "<zone-name>"
+```
+
+#### Network
+If multiple networks exist, you must specify which one to use:
+```
+openstack availability zone list
+```
+Example output:
+```
++--------------------------------------+----------+
+| ID                                   | Name     |
++--------------------------------------+----------+
+| <uuid>                               | private  |
+| <uuid>                               | external |
++--------------------------------------+----------+
+
+```
+Add the network  to the Packer configuration:
+```
+networks = ["<network-uuid>"]
+```
+#### Build the Image
+Once the configuration has been updated, run the build:
 ```
 packer build openstack-bioimage.pkr.hcl
 ```
-
 ### Step 3: Verify Image
 After the build process is complete, verify the newly created image by running:
 ```
 openstack image list | grep bioimage
 ```
+If successful, you should see output similar to the following (showing the image ID (UUID), Name, and Status):
+```
+| <UUID> | bioimage | active |
+```
+## Using the BioImage
+
+This section describes how to launch a virtual machine using the BioImage and what functionality is available once the instance is running.
+
+### Launching a BioImage VM
+
+Launch a new instance by following the steps in [Launch an Instance](#launch-an-instance).
+
+When you reach the Source section, select Image and choose bioimage instead of a standard Ubuntu image. If the image was built successfully, no other changes are required
+
+Once the instance is active, connect to it via SSH using the selected 
+key pair.
+```
+ssh -i /path/to/your/key <remote_user>@<bioimage_ip>
+```
+
+### Tools Available in BioImage
+
+BioImage includes a curated set of commonly used bioinformatics and workflow tools, exposed through the environment modules system.
+
+#### modules
+
+The image should include the following applications:
+- Singularity
+- SHPC
+- Spack
+- Ansible
+- Jupyter Notebook
+- RStudio
+- Nextflow
+- Snakemake
+- CernVM-FS client
+
+Check available modules with:
+```
+module avail
+```
+
+To use an application, load it with:
+```
+module load <app>
+```
+#### CernVM-FS (CVMFS)
+
+This image uses CernVM-FS (CVMFS) to provide access to shared bioinformatics software and datasets without installing them locally on the VM.
+
+Access CVMFS repositories:
+```
+ls /cvmfs/data.biocommons.aarnet.edu.au
+ls /cvmfs/data.galaxyproject.org
+ls /cvmfs/singularity.galaxyproject.org
+
+```
+For an explanation of what CVMFS is, how it works, and how it is used in BioImage, see [CVMFS documentation](docs/cvmfs.md).
+
