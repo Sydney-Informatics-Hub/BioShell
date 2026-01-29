@@ -239,7 +239,7 @@ Update the configuration:
 flavor = "<flavor-name>"
 ```
 #### Availability Zone (if applicable)
-Some clouds require an availability zone to be specified:
+Some OpenStack clouds require an availability zone to be specified (e.g. Nirin), while others do not (e.g. Nectar).
 ```
 openstack availability zone list
 ```
@@ -257,11 +257,12 @@ Update (or omit if not required):
 ```
 availability_zone = "<zone-name>"
 ```
+If your cloud supports automatic placement, this line can be omitted.
 
-#### Network
-If multiple networks exist, you must specify which one to use:
+#### Network (cloud-dependant)
+Some OpenStack clouds (e.g. Nirin) require the network to be specified explicitly. Others (e.g. Nectar) provide a default network and do not require this field.
 ```
-openstack availability zone list
+openstack network list
 ```
 Example output:
 ```
@@ -277,6 +278,8 @@ Add the network  to the Packer configuration:
 ```
 networks = ["<network-uuid>"]
 ```
+If your cloud has a default network, this field may be omitted.
+
 #### Build the Image
 Once the configuration has been updated, run the build:
 ```
