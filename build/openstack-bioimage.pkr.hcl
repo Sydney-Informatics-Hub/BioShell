@@ -14,10 +14,10 @@ packer {
 
 source "openstack" "ubuntu" {
   image_name          = "bioimage"
-  flavor              = "c3.1c2m10d"
-  networks            = ["5148786b-429b-4e45-ba84-08cd26358e8f"]
-  availability_zone   = "CloudV3"
-  source_image        = "68b8635c-9ae8-457a-afd6-b8609a36bf66"
+  flavor              = "" # update via: openstack flavor list
+  networks            = [""] # update via: openstack network list
+  availability_zone   = "" # update via: openstack availability zone list
+  source_image        = "" # update via: openstack image list
   ssh_username        = "ubuntu"
   volume_size          = 20
 }
@@ -34,7 +34,7 @@ provisioner "ansible" {
   
   ansible_env_vars = [
     "ANSIBLE_HOST_KEY_CHECKING=False",
-    "ANSIBLE_SCP_IF_SSH=True"  # ← This is the key fix
+    "ANSIBLE_SCP_IF_SSH=True"
   ]
 
   use_proxy = false
