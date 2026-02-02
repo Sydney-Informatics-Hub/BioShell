@@ -300,10 +300,6 @@ The relevant task in the playbook:
       CVMFS_HTTP_PROXY='DIRECT'
       CVMFS_QUOTA_LIMIT=4096
       CVMFS_USE_GEOAPI=yes
-
-
-#### Build the Image
-Once the configuration has been updated, run the build:
 ```
 packer build openstack-bioimage.pkr.hcl
 ```
