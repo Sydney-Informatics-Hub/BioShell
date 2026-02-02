@@ -201,7 +201,7 @@ packer init .
 
 Before running the build, review and update `openstack-bioimage.pkr.hcl` to ensure the values match your OpenStack environment.
 
-**Note: Example working configurations for [Nectar]() and [Nirin](build/examples/openstack-bioimage-nirin.pkr.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
+**Note: Example working configurations for [Nectar](build/examples/openstack-bioimage-nectar.pkr.hcl) and [Nirin](build/examples/openstack-bioimage-nirin.pkr.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
 
 At a minimum, check the following fields in the `source "openstack"` block:
 #### Source Image (Base OS)
@@ -281,6 +281,26 @@ Add the network  to the Packer configuration:
 networks = ["<network-uuid>"]
 ```
 If your cloud has a default network, this field may be omitted.
+
+#### CVMFS Configuration
+
+The `build-bioimage.yml` playbook configures CVMFS for the image.  
+
+- By default, the CVMFS HTTP proxy is set to **DIRECT** to make the build more portable across environments.  
+- If a specific proxy can be used (eg. `http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128` on Nirin), update the `CVMFS_HTTP_PROXY` line in [build-bioimage.yml](build/build-bioimage.yml)
+
+The relevant task in the playbook:
+
+```yaml
+- name: Write default.local
+  copy:
+    dest: /etc/cvmfs/default.local
+    content: |
+      CVMFS_REPOSITORIES=data.biocommons.aarnet.edu.au,data.galaxyproject.org,singularity.galaxyproject.org
+      CVMFS_HTTP_PROXY='DIRECT'
+      CVMFS_QUOTA_LIMIT=4096
+      CVMFS_USE_GEOAPI=yes
+
 
 #### Build the Image
 Once the configuration has been updated, run the build:
