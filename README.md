@@ -284,10 +284,10 @@ If your cloud has a default network, this field may be omitted.
 
 #### CVMFS Configuration
 
-The `build-bioimage.yml` playbook configures CVMFS for the image.  
+The [`build-bioimage.yml`](build/build-bioimage.yml) playbook configures CVMFS for the image.  
 
 - By default, the CVMFS HTTP proxy is set to **DIRECT** to make the build more portable across environments.  
-- If a specific proxy can be used (eg. `http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128` on Nirin), update the `CVMFS_HTTP_PROXY` line in [build-bioimage.yml](build/build-bioimage.yml)
+- If a infrastructure specific proxy is available (eg. `http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128` on Nirin), update the `CVMFS_HTTP_PROXY` line in the playbook.
 
 The relevant task in the playbook:
 
