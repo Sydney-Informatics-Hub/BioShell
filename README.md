@@ -201,6 +201,8 @@ packer init .
 
 Before running the build, review and update `openstack-bioimage.pkr.hcl` to ensure the values match your OpenStack environment.
 
+**Note: Example working configurations for [Nectar]() and [Nirin](build/examples/openstack-bioimage-nirin.pkr.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
+
 At a minimum, check the following fields in the `source "openstack"` block:
 #### Source Image (Base OS)
 Use this to find a suitable Ubuntu image to use as the build source:
