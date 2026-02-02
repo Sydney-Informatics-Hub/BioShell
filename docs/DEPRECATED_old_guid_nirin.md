@@ -1,3 +1,9 @@
+
+### ⚠️ **DEPRECATED — UNDER REVIEW**
+This document is currently outdated and should not be used. It may be updated in the future.
+please refer to the main [README.md](../README.md) for instructions on building an image.
+
+
 ## Instance Management
 
 ### Create Instances and Boot Image
