@@ -4,9 +4,23 @@
   become: true
 
   tasks:
+    - name: Wait for apt lock to be released
+      become: true
+      shell: |
+        while fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+              fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+              fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+          sleep 5
+        done
+      changed_when: false
+
     - name: Update apt repository
       apt:
         update_cache: yes
+      register: apt_update
+      retries: 3
+      delay: 10
+      until: apt_update is succeeded
 
     - name: Ensure necessary packages are installed
       apt:
@@ -371,7 +385,7 @@
         dest: /etc/cvmfs/default.local
         content: |
           CVMFS_REPOSITORIES=data.biocommons.aarnet.edu.au,data.galaxyproject.org,singularity.galaxyproject.org
-          CVMFS_HTTP_PROXY='http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128'
+          CVMFS_HTTP_PROXY='DIRECT'
           CVMFS_QUOTA_LIMIT=4096
           CVMFS_USE_GEOAPI=yes
 
