@@ -197,9 +197,9 @@ cd bioimage/build
 packer init .
 ```
 
-### Step 2: Build the BioImage
+### Step 2: Prepare Packer build configuration
 
-Before running the build, review and update `openstack-bioimage.pkr.hcl` to ensure the values match your OpenStack environment.
+Before running the build, review and update `openstack-bioimage.pkr.hcl` to ensure the values match your OpenStack environment. If using a prepared config skip to step 3.
 
 **Note: Example working configurations for [Nectar](build/examples/openstack-bioimage-nectar.pkr.hcl) and [Nirin](build/examples/openstack-bioimage-nirin.pkr.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
 
@@ -301,9 +301,13 @@ The relevant task in the playbook:
       CVMFS_QUOTA_LIMIT=4096
       CVMFS_USE_GEOAPI=yes
 ```
+### Step 3: Build the BioImage
+Once the configuration has been updated, run the build:
+
+```
 packer build openstack-bioimage.pkr.hcl
 ```
-### Step 3: Verify Image
+### Step 4: Verify Image
 After the build process is complete, verify the newly created image by running:
 ```
 openstack image list | grep bioimage
