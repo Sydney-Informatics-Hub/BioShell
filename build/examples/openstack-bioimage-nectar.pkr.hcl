@@ -14,9 +14,8 @@ packer {
 
 source "openstack" "ubuntu" {
   image_name          = "bioimage"
-  flavor              = "c3.1c2m10d"
-  availability_zone   = "CloudV3"
-  source_image        = "27e044c0-5ce7-4adc-8d95-73aa229a3e2f"
+  flavor              = "r3.small"
+  source_image        = "c0250c96-98a4-4bfa-b67c-51874808337f"
   ssh_username        = "ubuntu"
   volume_size          = 20
 }
@@ -24,8 +23,18 @@ source "openstack" "ubuntu" {
 build {
   sources = ["source.openstack.ubuntu"]
 
-  provisioner "ansible" {
-    playbook_file = "./build-bioimage.yml"
-    extra_arguments = ["--extra-vars", "ansible_user=ubuntu"]
-  }
+provisioner "ansible" {
+  playbook_file = "./build-bioimage.yml"
+  
+  extra_arguments = [
+    "--extra-vars", "ansible_user=ubuntu"
+  ]
+  
+  ansible_env_vars = [
+    "ANSIBLE_HOST_KEY_CHECKING=False",
+    "ANSIBLE_SCP_IF_SSH=True"
+  ]
+
+  use_proxy = false
+ }
 }

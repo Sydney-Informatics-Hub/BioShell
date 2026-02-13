@@ -4,9 +4,23 @@
   become: true
 
   tasks:
+    - name: Wait for apt lock to be released
+      become: true
+      shell: |
+        while fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+              fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+              fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+          sleep 5
+        done
+      changed_when: false
+
     - name: Update apt repository
       apt:
         update_cache: yes
+      register: apt_update
+      retries: 3
+      delay: 10
+      until: apt_update is succeeded
 
     - name: Ensure necessary packages are installed
       apt:
@@ -157,11 +171,20 @@
             git clone -c feature.manyFiles=true --depth=2 https://github.com/spack/spack.git /usr/local/spack
 
     # Intall Nextflow
-    - name: Ensure Java is installed
+    - name: Install Java 21 (required for Nextflow)
       apt:
-        name: openjdk-11-jdk
+        name: openjdk-21-jdk
         state: present
+      become: yes
       when: ansible_os_family == "Debian"
+
+    - name: Ensure Java 21 is default JVM
+      alternatives:
+        name: java
+        path: /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+      become: yes
+      when: ansible_os_family == "Debian"
+
 
     # Make Nextflowfolder
     - name: Create Nextflow folder
@@ -186,11 +209,12 @@
 
     - name: Verify Nextflow installation
       shell: | 
-        export NXF_DIST=/apps/nextflow/24.10.2/framework
-        export CAPSULE_CACHE_DIR=/apps/nextflow/24.10.2/capsule
-        export PATH=/apps/nextflow/24.10.2/bin:${PATH}
-        nextflow -version
-        chmod 0664 /apps/nextflow/24.10.2/framework/24.10.2/nextflow-24.10.2-one.jar
+          export NXF_VER=24.10.2
+          export NXF_AUTOINSTALL=false
+          export NXF_DIST=/apps/nextflow/24.10.2/framework
+          export CAPSULE_CACHE_DIR=/apps/nextflow/24.10.2/capsule
+          export PATH=/apps/nextflow/24.10.2/bin:${PATH}
+          nextflow -version
       register: nextflow_version
 
     - name: Clean up temporary files
@@ -361,7 +385,7 @@
         dest: /etc/cvmfs/default.local
         content: |
           CVMFS_REPOSITORIES=data.biocommons.aarnet.edu.au,data.galaxyproject.org,singularity.galaxyproject.org
-          CVMFS_HTTP_PROXY='cvmfs-proxy-1.nci.org.au;cvmfs-proxy-2.nci.org.au'
+          CVMFS_HTTP_PROXY='DIRECT'
           CVMFS_QUOTA_LIMIT=4096
           CVMFS_USE_GEOAPI=yes
 
@@ -441,10 +465,6 @@
     - name: setup cvmfs and probe resources
       shell: |
           cvmfs_config setup
-          cvmfs_config probe cvmfs-config.cern.ch 
-          cvmfs_config probe data.biocommons.aarnet.edu.au
-          cvmfs_config probe data.galaxyproject.org
-          cvmfs_config probe singularity.galaxyproject.org
 
     - name: Update PATH to remove /usr/local/games and add /usr/local/spack/bin
       lineinfile:
