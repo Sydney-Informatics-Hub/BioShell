@@ -393,14 +393,41 @@
           prepend-path PATH "/apps/ansible/2.10.8/bin"
 
     - name: Create RStudio modulefile
+      become: yes
       copy:
         dest: "/apps/Modules/modulefiles/rstudio/2023.12.1"
+        owner: root
+        group: root
+        mode: '0644'
         content: |
           #%Module1.0
-          prepend-path PATH "/apps/RStudio/2023.12.1/bin"
-          module-whatis "RStudio Server"
-          puts "Use 'sudo rstudio-server start' to start RStudio"
+          module-whatis "RStudio Server 2023.12.1"
+          prepend-path PATH "/usr/lib/rstudio-server/bin:/usr/lib/rstudio-server/bin"
 
+          set ip [exec /bin/bash -c "hostname -I 2>/dev/null | awk '{print \$1}'"]
+
+          puts stderr ""
+          puts stderr "RStudio Server"
+          puts stderr "----------------------------------"
+          puts stderr "Login Details:"
+          puts stderr ""
+          puts stderr "  Username: $env(USER)"
+          puts stderr "  Password: Your Linux account password"
+          puts stderr ""
+          puts stderr "If you have not set a password yet, run:"
+          puts stderr ""
+          puts stderr "  sudo passwd $env(USER)"
+          puts stderr ""
+          puts stderr "To start RStudio Server:"
+          puts stderr ""
+          puts stderr "  sudo rstudio-server start"
+          puts stderr ""
+          puts stderr "Then open in your browser:"
+          puts stderr ""
+          puts stderr "  http://$ip:8787"
+          puts stderr ""
+
+     
     #Install cvmfs and configure with Galaxy, AARNET training, EESSI access
     - name: Download CVMFS release package
       get_url:
