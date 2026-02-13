@@ -537,6 +537,8 @@
     - name: setup cvmfs and probe resources
       shell: |
           cvmfs_config setup
+          cvmfs_config probe data.galaxyproject.org
+          cvmfs_config probe singularity.galaxyproject.org
 
     - name: Update PATH to remove /usr/local/games and add /usr/local/spack/bin
       lineinfile:
