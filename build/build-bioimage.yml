@@ -263,15 +263,18 @@
         mode: '0755'
         remote_src: yes
 
-    - name: Verify Nextflow installation
-      shell: | 
+    - name: Verify Nextflow installation with user-writable paths
+      shell: |
           export NXF_VER=24.10.2
           export NXF_AUTOINSTALL=false
-          export NXF_DIST=/apps/nextflow/24.10.2/framework
-          export CAPSULE_CACHE_DIR=/apps/nextflow/24.10.2/capsule
+          export NXF_DIST=$HOME/nextflow/framework
+          export CAPSULE_CACHE_DIR=$HOME/nextflow/capsule
           export PATH=/apps/nextflow/24.10.2/bin:${PATH}
+          mkdir -p "$NXF_DIST" "$CAPSULE_CACHE_DIR"
           nextflow -version
       register: nextflow_version
+      args:
+        executable: /bin/bash
 
     - name: Clean up temporary files
       file:
