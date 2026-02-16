@@ -56,6 +56,30 @@
           - tree
         state: present
 
+    - name: Install build dependencies for R packages
+      apt:
+        name:
+          - build-essential
+          - cmake
+          - gdal-bin
+          - libcurl4-openssl-dev
+          - libxml2-dev
+          - libfontconfig1-dev
+          - libfreetype6-dev
+          - libharfbuzz-dev
+          - libfribidi-dev
+          - libudunits2-dev
+          - libglpk-dev
+          - libblas-dev
+          - liblapack-dev
+          - libopenblas-dev
+          - libtiff5-dev
+          - libjpeg-dev
+          - libpng-dev
+          - libcairo2-dev
+        state: present
+        update_cache: yes
+
     - name: Ensure the /opt/Modules/modulefiles directory exists
       file:
         path: /opt/Modules/modulefiles
