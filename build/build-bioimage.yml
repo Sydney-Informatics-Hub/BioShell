@@ -56,6 +56,30 @@
           - tree
         state: present
 
+    - name: Install build dependencies for R packages
+      apt:
+        name:
+          - build-essential
+          - cmake
+          - gdal-bin
+          - libcurl4-openssl-dev
+          - libxml2-dev
+          - libfontconfig1-dev
+          - libfreetype6-dev
+          - libharfbuzz-dev
+          - libfribidi-dev
+          - libudunits2-dev
+          - libglpk-dev
+          - libblas-dev
+          - liblapack-dev
+          - libopenblas-dev
+          - libtiff5-dev
+          - libjpeg-dev
+          - libpng-dev
+          - libcairo2-dev
+        state: present
+        update_cache: yes
+
     - name: Ensure the /opt/Modules/modulefiles directory exists
       file:
         path: /opt/Modules/modulefiles
@@ -65,6 +89,38 @@
       file:
         path: /apps/Modules/modulefiles
         state: directory
+    
+    # Install RStudio
+    - name: Install RStudio Server dependencies
+      apt:
+        name:
+          - gdebi-core
+          - libclang-dev
+        state: present
+
+    - name: Set RStudio Server version
+      set_fact:
+        rstudio_version: "2023.12.1-402"
+
+    - name: Download RStudio Server
+      get_url:
+        url: "https://download2.rstudio.org/server/jammy/amd64/rstudio-server-{{ rstudio_version }}-amd64.deb"
+        dest: "/tmp/rstudio-server.deb"
+
+    - name: Install RStudio Server
+      apt:
+        deb: /tmp/rstudio-server.deb
+
+    - name: Clean up RStudio Server installer
+      file:
+        path: /tmp/rstudio-server.deb
+        state: absent
+
+    - name: Enable and start RStudio Server
+      systemd:
+        name: rstudio-server
+        enabled: no
+        state: stopped
 
     # Install Singularity
     - name: Check if /apps/go exists
@@ -207,15 +263,18 @@
         mode: '0755'
         remote_src: yes
 
-    - name: Verify Nextflow installation
-      shell: | 
+    - name: Verify Nextflow installation with user-writable paths
+      shell: |
           export NXF_VER=24.10.2
           export NXF_AUTOINSTALL=false
-          export NXF_DIST=/apps/nextflow/24.10.2/framework
-          export CAPSULE_CACHE_DIR=/apps/nextflow/24.10.2/capsule
+          export NXF_DIST=$HOME/nextflow/framework
+          export CAPSULE_CACHE_DIR=$HOME/nextflow/capsule
           export PATH=/apps/nextflow/24.10.2/bin:${PATH}
+          mkdir -p "$NXF_DIST" "$CAPSULE_CACHE_DIR"
           nextflow -version
       register: nextflow_version
+      args:
+        executable: /bin/bash
 
     - name: Clean up temporary files
       file:
@@ -233,6 +292,54 @@
           setenv NXF_DIST /apps/nextflow/24.10.2/framework
           setenv CAPSULE_CACHE_DIR /apps/nextflow/24.10.2/capsule
 
+    # add nf-core modulefile
+    - name: Create nf-core install directory
+      file:
+        path: /apps/nf-core/3.5.2
+        state: directory
+        recurse: yes
+    
+    - name: Install Python venv dependency
+      apt:
+        name: python3-venv
+        state: present
+        update_cache: yes
+
+    - name: Create nf-core virtual environment
+      command: python3 -m venv /apps/nf-core/3.5.2
+      args:
+        creates: /apps/nf-core/3.5.2/bin/activate
+
+    - name: Install nf-core into venv
+      command: /apps/nf-core/3.5.2/bin/pip install nf-core==3.5.2
+
+    - name: Create symlink for nfcore alias (optional)
+      file:
+        src: /apps/nf-core/3.5.2/bin/nf-core
+        dest: /apps/nf-core/3.5.2/bin/nfcore
+        state: link
+
+    # ---------------------------
+    # Create modulefile directory
+    # ---------------------------
+
+    - name: Create nf-core modulefile directory
+      file:
+        path: /apps/Modules/modulefiles/nf-core
+        state: directory
+
+    - name: Create nf-core modulefile
+      copy:
+        dest: /apps/Modules/modulefiles/nf-core/3.5.2
+        content: |
+          #%Module1.0
+          module-whatis "nf-core 3.5.2"
+          prepend-path PATH "/apps/nf-core/3.5.2/bin"
+
+          if { [ module-info mode load ] } {
+              module load nextflow
+          }
+
     # Install shpc
     - name: Install shpc
       shell: |
@@ -241,7 +348,7 @@
         git clone -b 0.1.28 https://github.com/singularityhub/singularity-hpc.git
         cd singularity-hpc
         pip install -e .[all]
-        mv /usr/local/bin/shpc /opt/shpc/bin/
+        ln -s /opt/shpc/bin/shpc /usr/local/bin/shpc
         cp /opt/shpc/singularity-hpc/shpc/settings.yml /opt/shpc/singularity-hpc/shpc/settings-default.yml 
         cp /opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity.lua /opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity-original.lua
 
@@ -305,23 +412,27 @@
             module load singularity
           }
 
-    - name: Move apt installed software to /apps
+
+    - name: Create /apps paths and symlink system binaries
       shell: |
-        mkdir -p /apps/R/4.1.2/bin
-        mkdir -p /apps/Modules/modulefiles/R
-        mv /usr/bin/R /apps/R/4.1.2/bin
+        mkdir -p /apps/R/4.1.2/bin /apps/Modules/modulefiles/R
+        ln -sf /usr/bin/R /apps/R/4.1.2/bin/R
 
-        mkdir -p /apps/jupyter/2024.10/bin
-        mkdir -p /apps/Modules/modulefiles/jupyter
-        mv /usr/bin/jupyter /apps/jupyter/2024.10/bin
+        mkdir -p /apps/jupyter/2024.10/bin /apps/Modules/modulefiles/jupyter
+        ln -sf /usr/bin/jupyter /apps/jupyter/2024.10/bin/jupyter
 
-        mkdir -p /apps/snakemake/6.15.1/bin
-        mkdir -p /apps/Modules/modulefiles/snakemake
-        mv /usr/bin/snakemake /apps/snakemake/6.15.1/bin/
+        mkdir -p /apps/snakemake/6.15.1/bin /apps/Modules/modulefiles/snakemake
+        ln -sf /usr/bin/snakemake /apps/snakemake/6.15.1/bin/snakemake
 
-        mkdir -p /apps/ansible/2.10.8/bin
-        mkdir -p /apps/Modules/modulefiles/ansible
-        mv /usr/bin/ansible /apps/ansible/2.10.8/bin/
+        mkdir -p /apps/ansible/2.10.8/bin /apps/Modules/modulefiles/ansible
+        ln -sf /usr/bin/ansible /apps/ansible/2.10.8/bin/ansible
+
+
+        mkdir -p /apps/RStudio/2023.12.1/bin /apps/Modules/modulefiles/rstudio
+        ln -sf /usr/sbin/rstudio-server /apps/RStudio/2023.12.1/bin/rstudio-server
+      args:
+        executable: /bin/bash
+
 
     - name: Create R modulefile
       copy:
@@ -356,6 +467,42 @@
 
           prepend-path PATH "/apps/ansible/2.10.8/bin"
 
+    - name: Create RStudio modulefile
+      become: yes
+      copy:
+        dest: "/apps/Modules/modulefiles/rstudio/2023.12.1"
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          #%Module1.0
+          module-whatis "RStudio Server 2023.12.1"
+          prepend-path PATH "/usr/lib/rstudio-server/bin:/usr/lib/rstudio-server/bin"
+
+          set ip [exec /bin/bash -c "hostname -I 2>/dev/null | awk '{print \$1}'"]
+
+          puts stderr ""
+          puts stderr "RStudio Server"
+          puts stderr "----------------------------------"
+          puts stderr "Login Details:"
+          puts stderr ""
+          puts stderr "  Username: $env(USER)"
+          puts stderr "  Password: Your Linux account password"
+          puts stderr ""
+          puts stderr "If you have not set a password yet, run:"
+          puts stderr ""
+          puts stderr "  sudo passwd $env(USER)"
+          puts stderr ""
+          puts stderr "To start RStudio Server:"
+          puts stderr ""
+          puts stderr "  sudo rstudio-server start"
+          puts stderr ""
+          puts stderr "Then open in your browser:"
+          puts stderr ""
+          puts stderr "  http://$ip:8787"
+          puts stderr ""
+
+     
     #Install cvmfs and configure with Galaxy, AARNET training, EESSI access
     - name: Download CVMFS release package
       get_url:
@@ -465,6 +612,8 @@
     - name: setup cvmfs and probe resources
       shell: |
           cvmfs_config setup
+          cvmfs_config probe data.galaxyproject.org
+          cvmfs_config probe singularity.galaxyproject.org
 
     - name: Update PATH to remove /usr/local/games and add /usr/local/spack/bin
       lineinfile:

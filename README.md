@@ -371,3 +371,44 @@ ls /cvmfs/singularity.galaxyproject.org
 ```
 For an explanation of what CVMFS is, how it works, and how it is used in BioImage, see [CVMFS documentation](docs/cvmfs.md).
 
+#### R and RStudio
+`R` is pre-installed system-wide on the VM and is available without loading a module.
+
+You can run R directly:
+```
+R
+```
+
+The `R` module exists for visibility within the module system and to maintain consistency with other applications. Loading it ensures the correct PATH configuration but is not required to use R.
+```
+module load R
+```
+RStudio Server (Recommended Interface) provides a browser-based interface for working with R.
+
+To access RStudio load the module:
+```
+module load rstudio
+```
+
+This will display:
+- Login instructions
+- URL format for accessing RStudio
+- Username and password requirements
+- Commands to start the RStudio service
+
+Start RStudio Server
+```
+sudo rstudio-server start
+```
+Then open in your browser:
+```
+http://<server-ip>:8787
+```
+Login using:
+- Username: your Linux username (e.g., ubuntu)
+- Password: your Linux account password
+
+If you have not set a password yet:
+```
+sudo passwd $USER
+```
