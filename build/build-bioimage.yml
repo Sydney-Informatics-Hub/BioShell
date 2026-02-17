@@ -58,6 +58,30 @@
           - tree
         state: present
 
+    - name: Install build dependencies for R packages
+      apt:
+        name:
+          - build-essential
+          - cmake
+          - gdal-bin
+          - libcurl4-openssl-dev
+          - libxml2-dev
+          - libfontconfig1-dev
+          - libfreetype6-dev
+          - libharfbuzz-dev
+          - libfribidi-dev
+          - libudunits2-dev
+          - libglpk-dev
+          - libblas-dev
+          - liblapack-dev
+          - libopenblas-dev
+          - libtiff5-dev
+          - libjpeg-dev
+          - libpng-dev
+          - libcairo2-dev
+        state: present
+        update_cache: yes
+
     - name: Ensure the /opt/Modules/modulefiles directory exists
       file:
         path: /opt/Modules/modulefiles
@@ -241,15 +265,18 @@
         mode: '0755'
         remote_src: yes
 
-    - name: Verify Nextflow installation
-      shell: | 
+    - name: Verify Nextflow installation with user-writable paths
+      shell: |
           export NXF_VER=24.10.2
           export NXF_AUTOINSTALL=false
-          export NXF_DIST=/apps/nextflow/24.10.2/framework
-          export CAPSULE_CACHE_DIR=/apps/nextflow/24.10.2/capsule
+          export NXF_DIST=$HOME/nextflow/framework
+          export CAPSULE_CACHE_DIR=$HOME/nextflow/capsule
           export PATH=/apps/nextflow/24.10.2/bin:${PATH}
+          mkdir -p "$NXF_DIST" "$CAPSULE_CACHE_DIR"
           nextflow -version
       register: nextflow_version
+      args:
+        executable: /bin/bash
 
     - name: Clean up temporary files
       file:
@@ -266,6 +293,54 @@
           prepend-path PATH "/apps/nextflow/24.10.2/bin"
           setenv NXF_DIST /apps/nextflow/24.10.2/framework
           setenv CAPSULE_CACHE_DIR /apps/nextflow/24.10.2/capsule
+
+    # add nf-core modulefile
+    - name: Create nf-core install directory
+      file:
+        path: /apps/nf-core/3.5.2
+        state: directory
+        recurse: yes
+    
+    - name: Install Python venv dependency
+      apt:
+        name: python3-venv
+        state: present
+        update_cache: yes
+
+    - name: Create nf-core virtual environment
+      command: python3 -m venv /apps/nf-core/3.5.2
+      args:
+        creates: /apps/nf-core/3.5.2/bin/activate
+
+    - name: Install nf-core into venv
+      command: /apps/nf-core/3.5.2/bin/pip install nf-core==3.5.2
+
+    - name: Create symlink for nfcore alias (optional)
+      file:
+        src: /apps/nf-core/3.5.2/bin/nf-core
+        dest: /apps/nf-core/3.5.2/bin/nfcore
+        state: link
+
+    # ---------------------------
+    # Create modulefile directory
+    # ---------------------------
+
+    - name: Create nf-core modulefile directory
+      file:
+        path: /apps/Modules/modulefiles/nf-core
+        state: directory
+
+    - name: Create nf-core modulefile
+      copy:
+        dest: /apps/Modules/modulefiles/nf-core/3.5.2
+        content: |
+          #%Module1.0
+          module-whatis "nf-core 3.5.2"
+          prepend-path PATH "/apps/nf-core/3.5.2/bin"
+
+          if { [ module-info mode load ] } {
+              module load nextflow
+          }
 
     # Install shpc
     - name: Install shpc
