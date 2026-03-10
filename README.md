@@ -1,13 +1,13 @@
-# BioImage
+# BioShell
 
-BioImage is a pre‑configured, cloud‑ready bioinformatics environment designed to make command‑line–based biological data analysis easy to deploy, use, and scale. The primary goal of BioImage is to provide researchers and training providers with a flexible and cost‑effective platform for running bioinformatics workflows without the overhead of complex system setup or infrastructure management.
+BioShell is a pre‑configured, cloud‑ready bioinformatics environment designed to make command‑line–based biological data analysis easy to deploy, use, and scale. The primary goal of BioShell is to provide researchers and training providers with a flexible and cost‑effective platform for running bioinformatics workflows without the overhead of complex system setup or infrastructure management.
 
-BioImage enables users to focus on analysis and training, rather than on system configuration and resource provisioning.
+BioShell enables users to focus on analysis and training, rather than on system configuration and resource provisioning.
 
-### How BioImage Is Built
-BioImage is built using Packer and Ansible, and is designed to run on OpenStack‑based cloud infrastructure. This approach enables reproducible image builds, consistent configuration, and rapid deployment. The result is a ready‑to‑use virtual machine (VM) image that includes commonly used bioinformatics tools, dependencies, and sensible defaults for CLI‑based analysis.
+### How BioShell Is Built
+BioShell is built using Packer and Ansible, and is designed to run on OpenStack‑based cloud infrastructure. This approach enables reproducible image builds, consistent configuration, and rapid deployment. The result is a ready‑to‑use virtual machine (VM) image that includes commonly used bioinformatics tools, dependencies, and sensible defaults for CLI‑based analysis.
 
-This repository contains configuration and automation for building a custom Ubuntu‑based BioImage and provisioning instances on OpenStack‑compatible cloud environments.
+This repository contains configuration and automation for building a custom Ubuntu‑based BioShell and provisioning instances on OpenStack‑compatible cloud environments.
 
 ----------------------------
 ## Table of Contents
@@ -19,7 +19,7 @@ This repository contains configuration and automation for building a custom Ubun
     * [Setup](#setup)
     * [Activation](#activation)
 * [Build Image](#build-image)
-* [Using the BioImage](#Using-the-BioImage)
+* [Using BioShell](#Using-BioShell)
 
 ## Spinning up a VM in OpenStack
 
@@ -30,7 +30,7 @@ The control host (or head VM) is the machine from which you manage and deploy re
 - Holding your OpenStack credentials (RC file)
 - Running OpenStack CLI commands
 - Orchestrating or launching additional compute resources
-- Acting as the control point for bioimage installation and management
+- Acting as the control point for BioShell installation and management
 
 The head VM does not need to run workloads itself. It can be a VM running inside your OpenStack project (recommended) or a local machine (laptop or workstation) with network access to OpenStack APIs
 
@@ -50,13 +50,13 @@ The following steps describe how to create a head VM using the generic OpenStack
 1. Log in to your OpenStack dashboard and navigate to `Compute → Instance` 
 2. Select `launch instance`
 3. The Launch Instance dialog will appear, open on the Details tab
-4. Enter an instance name, choose a something descriptive (e.g. bioimage-head, control-host), and add a description
+4. Enter an instance name, choose a something descriptive (e.g. bioshell-head, control-host), and add a description
 
 ### Select the Source Image (Operating System)
 
 1. In the source tab, Select Boot Source: Image
 2. Choose a supported Ubuntu image (eg. Ubuntu 22.04)
-3. If the bioimage has been previously built you should be able to select bioimage at this step.
+3. If the BioShell image has been previously built you should be able to select BioShell at this step.
 
 ### Choose an Instance Flavor
 
@@ -119,8 +119,8 @@ ssh -i /path/to/your/key <remote_user>@<control_host_ip>
 then clone this repository:
 
 ```
-git clone https://github.com/AustralianBioCommons/bioimage
-cd bioimage
+git clone https://github.com/AustralianBioCommons/BioShell
+cd BioShell
 ```
 
 ## Environment
@@ -148,7 +148,7 @@ Example (template):
 ```Shell
 scp -i ~/.ssh/your_ssh_key \ 
     ~/Downloads/my-project-openrc.sh \
-    ubuntu@<control_host_ip>:/home/ubuntu/bioimage
+    ubuntu@<control_host_ip>:/home/ubuntu/BioShell
 ```
 Where:
 
@@ -193,7 +193,7 @@ If a project name is returned, your OpenStack environment is configured correctl
 ### Step 1: Initialize Packer
 Navigate to the `build` directory and initialize the Packer plugins:
 ```
-cd bioimage/build
+cd BioShell/build
 packer init .
 ```
 
@@ -301,7 +301,7 @@ The relevant task in the playbook:
       CVMFS_QUOTA_LIMIT=4096
       CVMFS_USE_GEOAPI=yes
 ```
-### Step 3: Build the BioImage
+### Step 3: Build BioShell
 Once the configuration has been updated, run the build:
 
 ```
@@ -310,31 +310,31 @@ packer build openstack-bioimage.pkr.hcl
 ### Step 4: Verify Image
 After the build process is complete, verify the newly created image by running:
 ```
-openstack image list | grep bioimage
+openstack image list | grep bioshell
 ```
 If successful, you should see output similar to the following (showing the image ID (UUID), Name, and Status):
 ```
-| <UUID> | bioimage | active |
+| <UUID> | BioShell | active |
 ```
-## Using the BioImage
+## Using BioShell
 
-This section describes how to launch a virtual machine using the BioImage and what functionality is available once the instance is running.
+This section describes how to launch a virtual machine using BioShell and what functionality is available once the instance is running.
 
-### Launching a BioImage VM
+### Launching a BioShell VM
 
 Launch a new instance by following the steps in [Launch an Instance](#launch-an-instance).
 
-When you reach the Source section, select Image and choose bioimage instead of a standard Ubuntu image. If the image was built successfully, no other changes are required
+When you reach the Source section, select Image and choose BioShell instead of a standard Ubuntu image. If the image was built successfully, no other changes are required
 
 Once the instance is active, connect to it via SSH using the selected 
 key pair.
 ```
-ssh -i /path/to/your/key <remote_user>@<bioimage_ip>
+ssh -i /path/to/your/key <remote_user>@<bioshell_ip>
 ```
 
-### Tools Available in BioImage
+### Tools Available in BioShell
 
-BioImage includes a curated set of commonly used bioinformatics and workflow tools, exposed through the environment modules system.
+BioShell includes a curated set of commonly used bioinformatics and workflow tools, exposed through the environment modules system.
 
 #### modules
 
@@ -369,7 +369,7 @@ ls /cvmfs/data.galaxyproject.org
 ls /cvmfs/singularity.galaxyproject.org
 
 ```
-For an explanation of what CVMFS is, how it works, and how it is used in BioImage, see [CVMFS documentation](docs/cvmfs.md).
+For an explanation of what CVMFS is, how it works, and how it is used in BioShell, see [CVMFS documentation](docs/cvmfs.md).
 
 #### R and RStudio
 `R` is pre-installed system-wide on the VM and is available without loading a module.
@@ -411,4 +411,38 @@ Login using:
 If you have not set a password yet:
 ```
 sudo passwd $USER
+```
+
+#### Shelley-Bio
+
+Shelley-Bio is an AI-powered command-line assistant built into BioShell to help you find, explore, and install bioinformatics tools. It answers questions in plain language and can locate software available through the image's installed package managers and module system.
+
+Shelley-Bio is available system-wide and requires no module loading:
+```
+shelley-bio --help
+```
+
+**Key commands:**
+
+| Command | Description |
+|---|---|
+| `shelley-bio search "<function>"` | Find tools by describing what you want to do |
+| `shelley-bio find <tool>` | Look up a specific tool by name |
+| `shelley-bio versions <tool>` | List available versions of a tool |
+| `shelley-bio build <tool>` | Install or build a tool |
+| `shelley-bio interactive` | Start an interactive session for guided assistance |
+
+**Examples:**
+```
+# Find tools for quality control
+shelley-bio search "quality control"
+
+# Look up samtools
+shelley-bio find samtools
+
+# Check available versions of STAR
+shelley-bio versions STAR
+
+# Launch interactive mode for guided help
+shelley-bio interactive
 ```
