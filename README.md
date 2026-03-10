@@ -199,9 +199,9 @@ packer init .
 
 ### Step 2: Prepare Packer build configuration
 
-Before running the build, review and update `openstack-bioimage.pkr.hcl` to ensure the values match your OpenStack environment. If using a prepared config skip to step 3.
+Before running the build, review and update `openstack-bioshell.pkr.hcl` to ensure the values match your OpenStack environment. If using a prepared config skip to step 3.
 
-**Note: Example working configurations for [Nectar](build/examples/openstack-bioimage-nectar.pkr.hcl) and [Nirin](build/examples/openstack-bioimage-nirin.pkr.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
+**Note: Example working configurations for [Nectar](build/examples/openstack-bioshell-nectar.pkr.hcl) and [Nirin](build/examples/openstack-bioshell-nirin.pkr.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
 
 At a minimum, check the following fields in the `source "openstack"` block:
 #### Source Image (Base OS)
@@ -284,7 +284,7 @@ If your cloud has a default network, this field may be omitted.
 
 #### CVMFS Configuration
 
-The [`build-bioimage.yml`](build/build-bioimage.yml) playbook configures CVMFS for the image.  
+The [`build-bioshell.yml`](build/build-bioshell.yml) playbook configures CVMFS for the image.  
 
 - By default, the CVMFS HTTP proxy is set to **DIRECT** to make the build more portable across environments.  
 - If a infrastructure specific proxy is available (eg. `http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128` on Nirin), update the `CVMFS_HTTP_PROXY` line in the playbook.
@@ -305,7 +305,7 @@ The relevant task in the playbook:
 Once the configuration has been updated, run the build:
 
 ```
-packer build openstack-bioimage.pkr.hcl
+packer build openstack-bioshell.pkr.hcl
 ```
 ### Step 4: Verify Image
 After the build process is complete, verify the newly created image by running:
@@ -415,7 +415,7 @@ sudo passwd $USER
 
 #### Shelley-Bio
 
-Shelley-Bio is an AI-powered command-line assistant built into BioShell to help you find, explore, and install bioinformatics tools. It answers questions in plain language and can locate software available through the image's installed package managers and module system.
+Shelley-Bio is a command-line assistant built into BioShell to help you find, explore, and install bioinformatics tools. It answers questions in plain language and can locate software available through the image's installed package managers and module system.
 
 Shelley-Bio is available system-wide and requires no module loading:
 ```

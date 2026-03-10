@@ -13,11 +13,11 @@ packer {
 }
 
 source "openstack" "ubuntu" {
-  image_name          = "bioimage"
-  flavor              = "c3.1c2m10d"
-  networks            = [""] # update via: openstack network list - select network associated with your project
-  availability_zone   = "CloudV3"
-  source_image        = "68b8635c-9ae8-457a-afd6-b8609a36bf66"
+  image_name          = "bioshell"
+  flavor              = "" # update via: openstack flavor list
+  networks            = [""] # update via: openstack network list
+  availability_zone   = "" # update via: openstack availability zone list
+  source_image        = "" # update via: openstack image list
   ssh_username        = "ubuntu"
   volume_size          = 20
 }

@@ -1,5 +1,5 @@
 ---
-- name: Build a bioimage
+- name: Build BioShell
   hosts: all
   become: true
 
@@ -481,7 +481,14 @@
           module-whatis "RStudio Server 2023.12.1"
           prepend-path PATH "/usr/lib/rstudio-server/bin:/usr/lib/rstudio-server/bin"
 
-          set ip [exec /bin/bash -c "hostname -I 2>/dev/null | awk '{print \$1}'"]
+          
+          set ip [exec /bin/bash -c "
+            curl -fsS --max-time 0.5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true
+          "]
+
+          if { $ip eq "" } {
+            set ip [exec /bin/bash -c "hostname -I 2>/dev/null | awk '{print \$1}'"]
+          }
 
           puts stderr ""
           puts stderr "RStudio Server"
@@ -709,7 +716,7 @@
       debug:
         var: shelley_cli_test.stdout_lines
 
-    - name: Add Bioimage welcome message with turtle
+    - name: Add BioShell welcome message with turtle
       copy:
         dest: /etc/motd
         owner: root
@@ -718,7 +725,7 @@
         content: |
           ############################################################
           #                                                          #
-          # Welcome to Bioimage!                                     #
+          # Welcome to BioShell!                                     #
           #                                                          #
           # A range of bioinformatics software is available in this  #
           #                                                          #

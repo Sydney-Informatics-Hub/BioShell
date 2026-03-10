@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE_IMAGE_NAME="bioimage"
+BASE_IMAGE_NAME="bioshell"
 VOLUME_PREFIX="training-VM"
 VOLUME_SIZE=20
 
