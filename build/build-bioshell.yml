@@ -723,22 +723,25 @@
         group: root
         mode: '0644'
         content: |
-          ############################################################
-          #                                                          #
-          # Welcome to BioShell!                                     #
-          #                                                          #
-          # A range of bioinformatics software is available in this  #
-          #                                                          #
-          #                                                          #
-          # If you need help finding and installing bioinformatics   #
-          # tools, ask Shelley-Bio                                   #
-          #                 _   .----.                               #
-          #                (_ \/      \_,                            #
-          #                   `uu----uu'                             #
-          # Basic commands:                                          #
-          # shelley-bio find <tool>                                  #
-          # shelley-bio search "<function>"                          #
-          # shelley-bio versions <tool>                              #
-          # shelley-bio build <tool>                                 #
-          # shelley-bio interactive                                  #
-          ############################################################
+        ##################################################################
+        #                                                                #
+        # Welcome to BioShell!                                           #
+        #                                                                #
+        # A range of commonly used bioinformatics software is available  #
+        # via CVMFS.                                                     #
+        #                                                                #
+        # To make the software folders visible, run:                     #
+        #   cvmfs_config probe                                           #
+        #                                                                #
+        # If you need help finding and installing software,              #
+        # ask Shelley-Bio                                                #
+        #                      _   .----.                                #
+        #                     (_ \/      \_,                             #
+        #                        `uu----uu'                              #
+        # Basic commands:                                                #
+        # shelley-bio find <tool>                                        #
+        # shelley-bio search "<function>"                                #
+        # shelley-bio versions <tool>                                    #
+        # shelley-bio build <tool>                                       #
+        # shelley-bio interactive                                        #
+        ##################################################################

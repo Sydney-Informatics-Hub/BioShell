@@ -26,7 +26,7 @@ build {
   sources = ["source.openstack.ubuntu"]
 
 provisioner "ansible" {
-  playbook_file = "./build-bioimage.yml"
+  playbook_file = "./build-bioshell.yml"
   
   extra_arguments = [
     "--extra-vars", "ansible_user=ubuntu"
