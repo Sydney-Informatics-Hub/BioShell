@@ -13,11 +13,9 @@ packer {
 }
 
 source "openstack" "ubuntu" {
-  image_name          = "bioimage"
-  flavor              = "c3.1c2m10d"
-  networks            = [""] # update via: openstack network list - select network associated with your project
-  availability_zone   = "CloudV3"
-  source_image        = "68b8635c-9ae8-457a-afd6-b8609a36bf66"
+  image_name          = "bioshell"
+  flavor              = "r3.small"
+  source_image        = "c0250c96-98a4-4bfa-b67c-51874808337f"
   ssh_username        = "ubuntu"
   volume_size          = 20
 }
@@ -26,7 +24,7 @@ build {
   sources = ["source.openstack.ubuntu"]
 
 provisioner "ansible" {
-  playbook_file = "./build-bioimage.yml"
+  playbook_file = "./build-bioshell.yml"
   
   extra_arguments = [
     "--extra-vars", "ansible_user=ubuntu"

@@ -38,7 +38,7 @@ Stop instances when they are not in use and restart them as needed.
 ./openstack/instances-stop.sh <VM-prefix>
 ```
 
-### Tools available in Bioimage
+### Tools available in BioShell
 
 #### modules
 
@@ -73,7 +73,7 @@ ls /cvmfs/data.galaxyproject.org
 ls /cvmfs/singularity.galaxyproject.org
 
 ```
-For an explanation of what CVMFS is, how it works, and how it is used in BioImage, see [CVMFS documentation](docs/cvmfs.md).
+For an explanation of what CVMFS is, how it works, and how it is used in BioShell, see [CVMFS documentation](docs/cvmfs.md).
 
 
 ## User Access 

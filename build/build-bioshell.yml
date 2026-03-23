@@ -1,5 +1,5 @@
 ---
-- name: Build a bioimage
+- name: Build BioShell
   hosts: all
   become: true
 
@@ -51,7 +51,9 @@
           - jupyter
           - snakemake
           - r-base
-          - pip
+          - python3
+          - python3-pip
+          - python3-venv
           - ansible
           - tree
         state: present
@@ -479,7 +481,14 @@
           module-whatis "RStudio Server 2023.12.1"
           prepend-path PATH "/usr/lib/rstudio-server/bin:/usr/lib/rstudio-server/bin"
 
-          set ip [exec /bin/bash -c "hostname -I 2>/dev/null | awk '{print \$1}'"]
+          
+          set ip [exec /bin/bash -c "
+            curl -fsS --max-time 0.5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true
+          "]
+
+          if { $ip eq "" } {
+            set ip [exec /bin/bash -c "hostname -I 2>/dev/null | awk '{print \$1}'"]
+          }
 
           puts stderr ""
           puts stderr "RStudio Server"
@@ -642,3 +651,97 @@
         - '/apps/Modules/modulefiles'
         - '/opt/Modules/modulefiles'
 
+    # ==============================
+    # Install Shelley Bio
+    # ==============================
+    - name: Ensure Python 3 and pip are installed
+      apt:
+        name:
+          - python3
+          - python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Ensure Git is installed
+      apt:
+        name: git
+        state: present
+
+    - name: Create installation directory for Shelley Bio
+      file:
+        path: /opt/shelley-bio
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Clone Shelley Bio repository
+      git:
+        repo: https://github.com/Sydney-Informatics-Hub/shelley-bio.git
+        dest: /opt/shelley-bio
+        version: main
+        force: yes
+        depth: 1
+
+    - name: Install Shelley Bio dependencies globally
+      pip:
+        requirements: /opt/shelley-bio/requirements.txt
+        state: present
+        executable: pip3
+
+    - name: Install Shelley Bio package globally
+      pip:
+        name: /opt/shelley-bio
+        editable: yes
+        state: present
+        executable: pip3
+
+
+    - name: Create system-wide launcher script
+      copy:
+        dest: /usr/local/bin/shelley-bio
+        owner: root
+        group: root
+        mode: '0755'
+        content: |
+          #!/usr/bin/env bash
+          exec python3 -m shelley_bio.client.cli "$@"
+
+    - name: Test Shelley Bio CLI
+      command: shelley-bio search "quality control"
+      register: shelley_cli_test
+      ignore_errors: yes
+
+    - name: Show Shelley Bio CLI test output
+      debug:
+        var: shelley_cli_test.stdout_lines
+
+    - name: Add BioShell welcome message with turtle
+      copy:
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+        ##################################################################
+        #                                                                #
+        # Welcome to BioShell!                                           #
+        #                                                                #
+        # A range of commonly used bioinformatics software is available  #
+        # via CVMFS.                                                     #
+        #                                                                #
+        # To make the software folders visible, run:                     #
+        #   cvmfs_config probe                                           #
+        #                                                                #
+        # If you need help finding and installing software,              #
+        # ask Shelley-Bio                                                #
+        #                      _   .----.                                #
+        #                     (_ \/      \_,                             #
+        #                        `uu----uu'                              #
+        # Basic commands:                                                #
+        # shelley-bio find <tool>                                        #
+        # shelley-bio search "<function>"                                #
+        # shelley-bio versions <tool>                                    #
+        # shelley-bio build <tool>                                       #
+        # shelley-bio interactive                                        #
+        ##################################################################

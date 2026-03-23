@@ -1,9 +1,9 @@
 # CernVM-FS (CVMFS)
 
 ## What is CVMFS?
-CernVM-FS (CVMFS) is a read-only, network-distributed filesystem originally developed to deliver software and data efficiently at scale. In BioImage, CVMFS is used to provide access to shared resources—such as container images, reference datasets, and other commonly used scientific files—without requiring them to be installed or copied onto each VM.
+CernVM-FS (CVMFS) is a read-only, network-distributed filesystem originally developed to deliver software and data efficiently at scale. In BioShell, CVMFS is used to provide access to shared resources—such as container images, reference datasets, and other commonly used scientific files—without requiring them to be installed or copied onto each VM.
 
-## Why BioImage uses CVMFS
+## Why BioShell uses CVMFS
 - Lightweight (smaller VM images)
 - Consistent (everyone sees the same tools/data)
 - Easier to maintain (updates happen centrally)
