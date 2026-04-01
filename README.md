@@ -55,7 +55,7 @@ The following steps describe how to create a head VM using the generic OpenStack
 ### Select the Source Image (Operating System)
 
 1. In the source tab, Select Boot Source: Image
-2. Choose a supported Ubuntu image (eg. Ubuntu 22.04)
+2. Choose a supported Ubuntu image (eg. Ubuntu 24.04)
 3. If the BioShell image has been previously built you should be able to select BioShell at this step.
 
 ### Choose an Instance Flavor
@@ -199,7 +199,7 @@ packer init .
 
 ### Step 2: Prepare Packer build configuration
 
-Before running the build, review and update `platform_name.pkrvars.hcl` to ensure the values match your OpenStack environment. If using a prepared config skip to step 3.
+Before running the build, review and update `[platform_name].pkrvars.hcl` to ensure the values match your OpenStack environment. If using a prepared config skip to step 3.
 
 **Note: Example working configurations for [Nectar](build/packer-vars/nectar.pkrvars.hcl) and [Nirin](build/packer-vars/nirin.pkrvars.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
 
@@ -284,17 +284,26 @@ If your cloud has a default network, this field may be omitted.
 
 #### CVMFS Configuration
 
-The [`ansible role cvmfs`](build/ansible/roles/cvmfs/tasks/main.yml) configures CVMFS for the image.  
+The [`ansible cvmfs role`](build/ansible/roles/cvmfs/tasks/main.yml) configures CVMFS for the image.  
 
 - By default, the CVMFS HTTP proxy is set to **DIRECT** to make the build more portable across environments.  
-- If a infrastructure specific proxy is available (eg. `http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128` on Nirin), add new file `platform_name.yml` to [`ansible vars`](build/ansible/vars/) with `cvmfs_proxy: [proxy]`.
+- If a infrastructure specific proxy is available (eg. `http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128` on Nirin), add new file `[platform_name].yml` to [`ansible vars`](build/ansible/vars/) with `cvmfs_proxy: [proxy]`.
 
 ### Step 3: Build BioShell
 Once the configuration has been updated, run the build:
 
+For Nirin and Nectar users:
 ```
-./scripts/[platform_name].sh
+./scripts/nirin.sh      // nirin users
+./scripts/nectar.sh.    // nectar users
 ```
+For other platform users:
+```
+packer build \
+  -var-file="./packer-vars/[platform_name].pkrvars.hcl" \
+  ./openstack-bioshell.pkr.hcl
+```
+
 ### Step 4: Verify Image
 After the build process is complete, verify the newly created image by running:
 ```
