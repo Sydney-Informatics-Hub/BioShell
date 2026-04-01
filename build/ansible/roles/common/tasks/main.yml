@@ -1,0 +1,198 @@
+---
+- name: Wait for apt lock
+  shell: |
+    while fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+      sleep 5
+    done
+  changed_when: false
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  register: apt_update
+  retries: 3
+  delay: 10
+  until: apt_update is succeeded
+
+- name: Install base packages
+  apt:
+    name:
+      - lmod
+      - build-essential
+      - libssl-dev
+      - uuid-dev
+      - libgpgme11-dev
+      - squashfs-tools
+      - git
+      - wget
+      - autoconf
+      - automake
+      - cryptsetup
+      - fuse2fs
+      - fuse
+      - libfuse-dev
+      - libglib2.0-dev
+      - libtool
+      - pkg-config
+      - runc
+      - squashfs-tools-ng
+      - uidmap
+      - zlib1g-dev
+      - libseccomp-dev
+      - nano
+      - jupyter
+      - snakemake
+      - r-base
+      - python3
+      - python3-pip
+      - python3-venv
+      - ansible
+      - tree
+    state: present
+
+- name: Install R build dependencies
+  apt:
+    name:
+      - build-essential
+      - cmake
+      - gdal-bin
+      - libcurl4-openssl-dev
+      - libxml2-dev
+      - libfontconfig1-dev
+      - libfreetype6-dev
+      - libharfbuzz-dev
+      - libfribidi-dev
+      - libudunits2-dev
+      - libglpk-dev
+      - libblas-dev
+      - liblapack-dev
+      - libopenblas-dev
+      - libtiff5-dev
+      - libjpeg-dev
+      - libpng-dev
+      - libcairo2-dev
+
+- name: Install Spack
+  block:
+    - name: Clone Spack repository
+      shell: |
+        git clone -c feature.manyFiles=true --depth=2 https://github.com/spack/spack.git /usr/local/spack
+
+- name: Ensure module directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ module_base_opt }}"
+    - "{{ module_base_apps }}"
+
+- name: Create /apps symlinks and paths
+  shell: |
+    mkdir -p /apps/R/{{ r_version }}/bin /apps/Modules/modulefiles/R
+    ln -sf /usr/bin/R /apps/R/{{ r_version }}/bin/R
+
+    mkdir -p /apps/jupyter/{{ jupyter_version }}/bin /apps/Modules/modulefiles/jupyter
+    ln -sf /usr/bin/jupyter /apps/jupyter/{{ jupyter_version }}/bin/jupyter
+
+    mkdir -p /apps/snakemake/{{ snakemake_version }}/bin /apps/Modules/modulefiles/snakemake
+    ln -sf /usr/bin/snakemake /apps/snakemake/{{ snakemake_version }}/bin/snakemake
+
+    mkdir -p /apps/ansible/{{ ansible_version.string }}/bin /apps/Modules/modulefiles/ansible
+    ln -sf /usr/bin/ansible /apps/ansible/{{ ansible_version.string }}/bin/ansible
+
+  args:
+    executable: /bin/bash
+
+- name: Update PATH in /etc/environment
+  lineinfile:
+    path: /etc/environment
+    regexp: '^PATH='
+    line: 'PATH="{{ updated_path }}"'
+    state: present
+  vars:
+    current_path: "{{ ansible_env.PATH }}"
+    updated_path: "{{ current_path | replace('/usr/local/games', '') | trim | replace('::', ':') | regex_replace('^:|:$', '') }}:/usr/local/spack/bin"
+
+- name: Comment out existing module paths
+  lineinfile:
+    path: /etc/lmod/modulespath
+    regexp: '^(.*(/etc/lmod/modules|/usr/share/lmod/lmod/modulefiles).*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+
+- name: Add new module paths
+  lineinfile:
+    path: /etc/lmod/modulespath
+    line: "{{ item }}"
+    state: present
+  loop:
+    - "{{ module_base_apps }}"
+    - "{{ module_base_opt }}"
+
+- name: Create jupyter modulefile
+  copy:
+    dest: "/apps/Modules/modulefiles/jupyter/{{ jupyter_version }}"
+    content: |
+      #%Module1.0
+
+      prepend-path PATH "/apps/jupyter/{{ jupyter_version }}/bin"
+
+- name: Create snakemake modulefile
+  copy:
+    dest: "/apps/Modules/modulefiles/snakemake/{{ snakemake_version }}"
+    content: |
+      #%Module1.0
+
+      prepend-path PATH "/apps/snakemake/{{ snakemake_version }}/bin"
+
+- name: Create R modulefile
+  copy:
+    dest: "/apps/Modules/modulefiles/R/{{ r_version }}"
+    content: |
+      #%Module1.0
+      
+      prepend-path PATH "/apps/R/{{ r_version }}/bin"
+
+- name: Create ansible modulefile
+  copy:
+    dest: "/apps/Modules/modulefiles/ansible/{{ ansible_version.string }}"
+    content: |
+      #%Module1.0
+
+      prepend-path PATH "/apps/ansible/{{ ansible_version.string }}/bin"
+
+- name: Ensure motd.d directory exists
+  file:
+    path: /etc/motd.d
+    state: directory
+    mode: '0755'
+
+- name: Add BioShell welcome message
+  copy:
+    dest: /etc/motd.d/bioshell
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      ##################################################################
+      #                                                                #
+      # Welcome to BioShell!                                           #
+      #                                                                #
+      # A range of commonly used bioinformatics software is available  #
+      # via CVMFS.                                                     #
+      #                                                                #
+      # If you need help finding and installing software,              #
+      # ask Shelley-Bio                                                #
+      #                      _   .----.                                #
+      #                     (_ \/      \_,                             #
+      #                        `uu----uu'                              #
+      # Basic commands:                                                #
+      # shelley-bio find <tool>                                        #
+      # shelley-bio search "<function>"                                #
+      # shelley-bio versions <tool>                                    #
+      # shelley-bio build <tool>                                       #
+      # shelley-bio interactive                                        #
+      ##################################################################

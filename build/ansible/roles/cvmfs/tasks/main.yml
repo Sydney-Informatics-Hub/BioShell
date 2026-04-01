@@ -1,0 +1,94 @@
+---
+- name: Download CVMFS release package
+  get_url:
+    url: https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest_all.deb
+    dest: /tmp/cvmfs-release-latest_all.deb
+
+- name: Install CVMFS release package
+  apt:
+    deb: /tmp/cvmfs-release-latest_all.deb
+
+- name: Remove CVMFS release package
+  file:
+    path: /tmp/cvmfs-release-latest_all.deb
+    state: absent
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install CVMFS
+  apt:
+    name: cvmfs
+    state: present
+
+- name: Disable unwanted CVMFS default config files
+  command: "mv {{ item }} {{ item }}-DISABLED"
+  args:
+    removes: "{{ item }}"
+  loop:
+    - /etc/cvmfs/config.d/cvmfs-config.cern.ch.conf
+    - /etc/cvmfs/default.d/50-cern-debian.conf
+    - /etc/cvmfs/domain.d/cern.ch.conf
+    - /etc/cvmfs/domain.d/egi.eu.conf
+    - /etc/cvmfs/domain.d/opensciencegrid.org.conf
+
+- name: Write default.local
+  copy:
+    dest: /etc/cvmfs/default.local
+    content: |
+      CVMFS_REPOSITORIES={{ cvmfs_repositories }}
+      CVMFS_HTTP_PROXY='{{ cvmfs_proxy }}'
+      CVMFS_QUOTA_LIMIT={{ cvmfs_quota_limit }}
+      CVMFS_USE_GEOAPI=yes
+
+- name: set up cvmfs and set autofs
+  shell: |
+      cvmfs_config setup
+      sed -i 's%#+dir:/etc/auto.master.d%+dir:/etc/auto.master.d%' /etc/auto.master
+      systemctl restart autofs
+
+- name: Write galaxyproject.org.conf 
+  copy:
+    dest: /etc/cvmfs/domain.d/galaxyproject.org.conf 
+    content: |
+      CVMFS_SERVER_URL="http://cvmfs1-tacc0.galaxyproject.org/cvmfs/@fqrn@;http://cvmfs1-iu0.galaxyproject.org/cvmfs/@fqrn@;http://cvmfs1-psu0.galaxyproject.org/cvmfs/@fqrn@;http://galaxy.jrc.ec.europa.eu:8008/cvmfs/@fqrn@;http://cvmfs1-mel0.gvl.org.au/cvmfs/@fqrn@"
+      CVMFS_KEYS_DIR="/etc/cvmfs/keys/galaxyproject.org"
+
+- name: Ensure the /etc/cvmfs/keys/galaxyproject.org exists
+  file:
+    path: /etc/cvmfs/keys/galaxyproject.org
+    state: directory
+
+
+- name: Write data.galaxyproject.org key
+  copy:
+    dest: /etc/cvmfs/keys/galaxyproject.org/data.galaxyproject.org.pub 
+    content: |
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5LHQuKWzcX5iBbCGsXGt
+      6CRi9+a9cKZG4UlX/lJukEJ+3dSxVDWJs88PSdLk+E25494oU56hB8YeVq+W8AQE
+      3LWx2K2ruRjEAI2o8sRgs/IbafjZ7cBuERzqj3Tn5qUIBFoKUMWMSIiWTQe2Sfnj
+      GzfDoswr5TTk7aH/FIXUjLnLGGCOzPtUC244IhHARzu86bWYxQJUw0/kZl5wVGcH
+      maSgr39h1xPst0Vx1keJ95AH0wqxPbCcyBGtF1L6HQlLidmoIDqcCQpLsGJJEoOs
+      NVNhhcb66OJHah5ppI1N3cZehdaKyr1XcF9eedwLFTvuiwTn6qMmttT/tHX7rcxT
+      owIDAQAB
+      -----END PUBLIC KEY-----
+
+- name: Write singularity.galaxyproject.org.pub key
+  copy:
+    dest: /etc/cvmfs/keys/galaxyproject.org/singularity.galaxyproject.org.pub
+    content: |
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuJZTWTY3/dBfspFKifv8
+      TWuuT2Zzoo1cAskKpKu5gsUAyDFbZfYBEy91qbLPC3TuUm2zdPNsjCQbbq1Liufk
+      uNPZJ8Ubn5PR6kndwrdD13NVHZpXVml1+ooTSF5CL3x/KUkYiyRz94sAr9trVoSx
+      THW2buV7ADUYivX7ofCvBu5T6YngbPZNIxDB4mh7cEal/UDtxV683A/5RL4wIYvt
+      S5SVemmu6Yb8GkGwLGmMVLYXutuaHdMFyKzWm+qFlG5JRz4okUWERvtJ2QAJPOzL
+      mAG1ceyBFowj/r3iJTa+Jcif2uAmZxg+cHkZG5KzATykF82UH1ojUzREMMDcPJi2
+      dQIDAQAB
+      -----END PUBLIC KEY-----
+
+- name: setup cvmfs
+  shell: |
+      cvmfs_config setup

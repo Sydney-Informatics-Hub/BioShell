@@ -38,7 +38,7 @@ For most users, a small Ubuntu VM inside OpenStack is the simplest and most repr
 Recommended head VM characteristics:
 
 ```
-Operating System: Ubuntu LTS (20.04 or newer)
+Operating System: Ubuntu LTS (24.04 or newer)
 CPU/RAM: minimal (e.g. 1–2 vCPUs, 2–4 GB RAM)
 Access: SSH enabled via key pair
 ```
@@ -199,9 +199,9 @@ packer init .
 
 ### Step 2: Prepare Packer build configuration
 
-Before running the build, review and update `openstack-bioshell.pkr.hcl` to ensure the values match your OpenStack environment. If using a prepared config skip to step 3.
+Before running the build, review and update `platform_name.pkrvars.hcl` to ensure the values match your OpenStack environment. If using a prepared config skip to step 3.
 
-**Note: Example working configurations for [Nectar](build/examples/openstack-bioshell-nectar.pkr.hcl) and [Nirin](build/examples/openstack-bioshell-nirin.pkr.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
+**Note: Example working configurations for [Nectar](build/packer-vars/nectar.pkrvars.hcl) and [Nirin](build/packer-vars/nirin.pkrvars.hcl) are included and were last successfully tested on 2 February 2026. The Nirin configuration requires you to add your project [network](#network-cloud-dependant).**
 
 At a minimum, check the following fields in the `source "openstack"` block:
 #### Source Image (Base OS)
@@ -214,7 +214,7 @@ Example output:
 +--------------------------------------+-------------------------------+--------+
 | ID                                   | Name                          | Status |
 +--------------------------------------+-------------------------------+--------+
-| <uuid>                               | Ubuntu 20.04                  | active |
+| <uuid>                               | Ubuntu 24.04                  | active |
 +--------------------------------------+-------------------------------+--------+
 ```
 Copy the ID of the image you want to use and set it as:
@@ -284,28 +284,16 @@ If your cloud has a default network, this field may be omitted.
 
 #### CVMFS Configuration
 
-The [`build-bioshell.yml`](build/build-bioshell.yml) playbook configures CVMFS for the image.  
+The [`ansible role cvmfs`](build/ansible/roles/cvmfs/tasks/main.yml) configures CVMFS for the image.  
 
 - By default, the CVMFS HTTP proxy is set to **DIRECT** to make the build more portable across environments.  
-- If a infrastructure specific proxy is available (eg. `http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128` on Nirin), update the `CVMFS_HTTP_PROXY` line in the playbook.
+- If a infrastructure specific proxy is available (eg. `http://cvmfs-proxy-1.nci.org.au:3128;http://cvmfs-proxy-2.nci.org.au:3128` on Nirin), add new file `platform_name.yml` to [`ansible vars`](build/ansible/vars/) with `cvmfs_proxy: [proxy]`.
 
-The relevant task in the playbook:
-
-```yaml
-- name: Write default.local
-  copy:
-    dest: /etc/cvmfs/default.local
-    content: |
-      CVMFS_REPOSITORIES=data.biocommons.aarnet.edu.au,data.galaxyproject.org,singularity.galaxyproject.org
-      CVMFS_HTTP_PROXY='DIRECT'
-      CVMFS_QUOTA_LIMIT=4096
-      CVMFS_USE_GEOAPI=yes
-```
 ### Step 3: Build BioShell
 Once the configuration has been updated, run the build:
 
 ```
-packer build openstack-bioshell.pkr.hcl
+./scripts/[platform_name].sh
 ```
 ### Step 4: Verify Image
 After the build process is complete, verify the newly created image by running:
@@ -364,7 +352,6 @@ This image uses CernVM-FS (CVMFS) to provide access to shared bioinformatics sof
 
 Access CVMFS repositories:
 ```
-ls /cvmfs/data.biocommons.aarnet.edu.au
 ls /cvmfs/data.galaxyproject.org
 ls /cvmfs/singularity.galaxyproject.org
 

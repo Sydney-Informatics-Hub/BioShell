@@ -1,0 +1,76 @@
+---
+- name: Install RStudio Server dependencies
+  apt:
+    name:
+      - gdebi-core
+      - libclang-dev
+    state: present
+
+- name: Download RStudio Server {{ rstudio_version_full }}
+  get_url:
+    url: "https://download2.rstudio.org/server/jammy/amd64/rstudio-server-{{ rstudio_version_full }}-amd64.deb"
+    dest: /tmp/rstudio-server.deb
+
+- name: Install RStudio Server
+  apt:
+    deb: /tmp/rstudio-server.deb
+
+- name: Clean up installer
+  file:
+    path: /tmp/rstudio-server.deb
+    state: absent
+
+- name: Disable RStudio Server autostart
+  systemd:
+    name: rstudio-server
+    enabled: no
+    state: stopped
+
+- name: Create /apps paths and symlink system binaries
+  shell: |
+    mkdir -p /apps/RStudio/{{ rstudio_version }}/bin /apps/Modules/modulefiles/rstudio
+    ln -sf /usr/sbin/rstudio-server /apps/RStudio/{{ rstudio_version }}/bin/rstudio-server
+  args:
+    executable: /bin/bash
+
+- name: Create RStudio modulefile
+  become: yes
+  copy:
+    dest: "/apps/Modules/modulefiles/rstudio/{{ rstudio_version }}"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      #%Module1.0
+      module-whatis "RStudio Server {{ rstudio_version }}"
+      prepend-path PATH "/usr/lib/rstudio-server/bin:/usr/lib/rstudio-server/bin"
+
+      
+      set ip [exec /bin/bash -c "
+        curl -fsS --max-time 0.5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true
+      "]
+
+      if { $ip eq "" } {
+        set ip [exec /bin/bash -c "hostname -I 2>/dev/null | awk '{print \$1}'"]
+      }
+
+      puts stderr ""
+      puts stderr "RStudio Server"
+      puts stderr "----------------------------------"
+      puts stderr "Login Details:"
+      puts stderr ""
+      puts stderr "  Username: $env(USER)"
+      puts stderr "  Password: Your Linux account password"
+      puts stderr ""
+      puts stderr "If you have not set a password yet, run:"
+      puts stderr ""
+      puts stderr "  sudo passwd $env(USER)"
+      puts stderr ""
+      puts stderr "To start RStudio Server:"
+      puts stderr ""
+      puts stderr "  sudo rstudio-server start"
+      puts stderr ""
+      puts stderr "Then open in your browser:"
+      puts stderr ""
+      puts stderr "  http://$ip:8787"
+      puts stderr ""

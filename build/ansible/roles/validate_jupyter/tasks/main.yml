@@ -1,0 +1,33 @@
+---
+- name: Check Jupyter binary exists
+  stat:
+    path: "/apps/jupyter/{{ jupyter_version }}/bin/jupyter"
+  register: jupyter_bin
+
+- name: Assert Jupyter binary exists
+  assert:
+    that:
+      - jupyter_bin.stat is defined
+      - jupyter_bin.stat.exists
+    fail_msg: "Jupyter binary not found at /apps/jupyter/{{ jupyter_version }}/bin/jupyter"
+
+- name: Check Jupyter version
+  command: jupyter --version
+  changed_when: false
+  register: jupyter_version_output
+
+- name: Show Jupyter version
+  debug:
+    var: jupyter_version_output.stdout_lines
+
+- name: Check Jupyter modulefile exists
+  stat:
+    path: "/apps/Modules/modulefiles/jupyter/{{ jupyter_version }}"
+  register: jupyter_module
+
+- name: Assert Jupyter modulefile exists
+  assert:
+    that:
+      - jupyter_module.stat is defined
+      - jupyter_module.stat.exists
+    fail_msg: "Jupyter modulefile not found at /apps/Modules/modulefiles/jupyter/{{ jupyter_version }}"

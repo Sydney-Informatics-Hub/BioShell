@@ -1,0 +1,14 @@
+---
+- name: Validate BioShell base image
+  hosts: all
+  become: true
+
+  vars_files:
+    - "vars/tool-versions.yml"
+
+  roles:
+    - validate_cvmfs
+    - validate_nextflow
+    - validate_jupyter
+    - validate_rstudio
+    - validate_shelley-bio

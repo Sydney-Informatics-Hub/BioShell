@@ -1,0 +1,35 @@
+---
+- name: Check RStudio Server binary exists
+  stat:
+    path: /usr/sbin/rstudio-server
+  register: rstudio_bin
+
+- name: Assert RStudio binary exists
+  assert:
+    that:
+      - rstudio_bin.stat is defined
+      - rstudio_bin.stat.exists
+    fail_msg: "RStudio binary not found at /usr/sbin/rstudio-server"
+
+- name: Check RStudio Server version
+  command: rstudio-server version
+  changed_when: false
+  register: rstudio_version_output
+
+- name: Verify expected version
+  assert:
+    that:
+      - "rstudio_version in rstudio_version_output.stdout"
+    fail_msg: "RStudio version mismatch — expected {{ rstudio_version }}, got {{ rstudio_version_output.stdout }}"
+
+- name: Check RStudio modulefile exists
+  stat:
+    path: "/apps/Modules/modulefiles/rstudio/{{ rstudio_version }}"
+  register: rstudio_module
+
+- name: Assert RStudio modulefile exists
+  assert:
+    that:
+      - rstudio_module.stat is defined
+      - rstudio_module.stat.exists
+    fail_msg: "RStudio modulefile not found at /apps/Modules/modulefiles/rstudio/{{ rstudio_version }}"
