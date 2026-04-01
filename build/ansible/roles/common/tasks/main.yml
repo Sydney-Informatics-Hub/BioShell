@@ -170,7 +170,7 @@
     state: directory
     mode: '0755'
 
-- name: Add BioShell welcome message
+- name: Add BioShell welcome message with turtle
   copy:
     dest: /etc/motd.d/bioshell
     owner: root
@@ -183,6 +183,9 @@
       #                                                                #
       # A range of commonly used bioinformatics software is available  #
       # via CVMFS.                                                     #
+      #                                                                #
+      # To make the software folders visible, run:                     #
+      #   cvmfs_config probe                                           #
       #                                                                #
       # If you need help finding and installing software,              #
       # ask Shelley-Bio                                                #
