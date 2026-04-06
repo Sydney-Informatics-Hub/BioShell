@@ -1,3 +1,3 @@
 flavor        = "r3.small"
-source_image  = "c0250c96-98a4-4bfa-b67c-51874808337f"
+source_image  = "71d4797b-8951-4d1f-b572-27e8767d8a1b"
 platform      = "nectar"
