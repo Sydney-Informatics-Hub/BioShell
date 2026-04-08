@@ -19,7 +19,7 @@
 
 - name: Report CLI test result
   debug:
-    msg: "{{ 'OK' if shelley_test.rc == 0 else 'FAILED — may need network access to run' }}"
+    msg: "{{ 'OK' if shelley_test.rc == 0 else 'WARNING: shelley-bio search CLI test failed' }}"
 
 - name: Check MOTD exists
   stat:
