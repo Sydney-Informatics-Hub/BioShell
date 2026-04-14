@@ -42,11 +42,17 @@ variable "platform" {
 source "openstack" "ubuntu" {
   image_name        = "bioshell"
   flavor            = var.flavor
-  source_image      = var.source_image
   ssh_username      = "ubuntu"
   volume_size       = var.volume_size
   networks          = var.networks != null ? var.networks : null    
   availability_zone = var.availability_zone != null ? var.availability_zone : null
+
+  source_image_filter {
+    filters {
+      name       = var.source_image
+      visibility = "public"
+    }
+  }
 }
 
 build {
