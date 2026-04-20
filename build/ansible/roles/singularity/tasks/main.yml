@@ -99,8 +99,10 @@
     cd /opt/shpc
     git clone -b {{ shpc_version }} https://github.com/singularityhub/singularity-hpc.git
     cd singularity-hpc
+    python3 -m venv /opt/shpc-env
+    source /opt/shpc-env/bin/activate
     pip install -e .[all]
-    ln -s /opt/shpc/bin/shpc /usr/local/bin/shpc
+    ln -s /opt/shpc-env/bin/shpc /opt/shpc/bin/shpc
     cp /opt/shpc/singularity-hpc/shpc/settings.yml /opt/shpc/singularity-hpc/shpc/settings-default.yml 
     cp /opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity.lua /opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity-original.lua
   args:

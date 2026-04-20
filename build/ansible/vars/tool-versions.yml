@@ -29,6 +29,6 @@ module_base_apps: "/apps/Modules/modulefiles"
 module_base_opt: "/opt/Modules/modulefiles"
 
 # Common tools
-snakemake_version: "6.15.1"
-r_version: "4.1.2"
-jupyter_version: "2024.10"
+snakemake_version: "7.32.4"
+r_version: "4.3.3"
+jupyter_version: "2026.04"

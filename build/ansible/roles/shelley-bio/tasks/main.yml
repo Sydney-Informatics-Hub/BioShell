@@ -67,11 +67,34 @@
     content: |
       #!/opt/shelley-bio-env/bin/python3
       import sys
-      import asyncio
       from shelley_bio.client.cli import main
       if __name__ == "__main__":
           sys.argv[0] = sys.argv[0].removesuffix(".exe")
-          sys.exit(asyncio.run(main()))
+          sys.exit(main())
+
+- name: Find toolfinder_meta.yaml in source
+  command: find /opt/shelley-bio -name "toolfinder_meta.yaml"
+  register: yaml_find
+  changed_when: false
+
+- name: Find galaxy_singularity_cache.json.gz in source
+  command: find /opt/shelley-bio -name "galaxy_singularity_cache.json.gz"
+  register: cache_find
+  changed_when: false
+
+- name: Symlink toolfinder_meta.yaml to venv site-packages
+  file:
+    src: "{{ yaml_find.stdout }}"
+    dest: /opt/shelley-bio-env/lib/python3.12/site-packages/toolfinder_meta.yaml
+    state: link
+    force: yes
+
+- name: Symlink galaxy_singularity_cache.json.gz to venv site-packages
+  file:
+    src: "{{ cache_find.stdout }}"
+    dest: /opt/shelley-bio-env/lib/python3.12/site-packages/galaxy_singularity_cache.json.gz
+    state: link
+    force: yes
 
 - name: Add shelley-bio venv to system PATH
   lineinfile:
@@ -96,4 +119,4 @@
     mode: '0755'
     content: |
       #!/usr/bin/env bash
-      exec /opt/shelley-bio-env/bin/python3 -m shelley_bio.client.cli "$@"
+      exec /opt/shelley-bio-env/bin/shelley-bio "$@"
