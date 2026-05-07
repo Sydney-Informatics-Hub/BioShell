@@ -1,0 +1,154 @@
+---
+- name: Check if /apps/go exists
+  stat:
+    path: /apps/go
+  register: go_apps_dir
+
+- name: Check if /usr/local/go exists
+  stat:
+    path: /usr/local/go
+  register: go_local_dir
+
+- name: Report status of /apps/go
+  debug:
+    msg: "/apps/go exists: {{ go_apps_dir.stat.exists }}"
+
+- name: Report status of /usr/local/go
+  debug:
+    msg: "/usr/local/go exists: {{ go_local_dir.stat.exists }}"
+
+- name: Take action based on Go installation paths
+  debug:
+    msg: >
+      Go is installed in:
+      {% if go_apps_dir.stat.exists %}
+        - /apps/go
+      {% endif %}
+      {% if go_local_dir.stat.exists %}
+        - /usr/local/go
+      {% endif %}
+      {% if not (go_apps_dir.stat.exists or go_local_dir.stat.exists) %}
+        - Neither path exists.
+      {% endif %}
+
+- name: Install Go
+  block:
+    - name: Download Go binary
+      get_url:
+        url: "https://dl.google.com/go/go{{ go_version }}.{{ os }}-{{ arch }}.tar.gz"
+        dest: /tmp/go{{ go_version }}.{{ os }}-{{ arch }}.tar.gz
+
+    - name: Extract Go binary to  /apps/
+      unarchive:
+        src: /tmp/go{{ go_version }}.{{ os }}-{{ arch }}.tar.gz
+        dest: /apps/
+        remote_src: yes
+        
+- name: Install Singularity build dependencies
+  apt:
+    name:
+      - libsubid-dev
+    state: present
+
+- name: Create directories for Singularity 
+  shell: |
+    export GOPATH=${HOME}/go && \
+    mkdir -p $GOPATH/src/github.com/sylabs && \
+    cd $GOPATH/src/github.com/sylabs && \
+    wget https://github.com/sylabs/singularity/releases/download/v{{ singularity_version }}/singularity-ce-{{ singularity_version }}.tar.gz && \
+    tar -xzf singularity-ce-{{ singularity_version }}.tar.gz && \
+    cd ./singularity-ce-{{ singularity_version }}
+
+- name: Compile the SingularityCE source code
+  shell: | 
+    export GOPATH=${HOME}/go 
+    export PATH=/apps/go/bin:${PATH}:${GOPATH}/bin
+    cd $GOPATH/src/github.com/sylabs/singularity-ce-{{ singularity_version }} && \
+    ./mconfig --prefix=/opt/singularity/{{ singularity_version }} && \
+    make -C ./builddir && \
+    make -C ./builddir install
+  args:
+    executable: /bin/bash
+
+- name: Clean up Singularity source code
+  file:
+    path: /tmp/singularity
+    state: absent
+
+- name: Clean up go source code
+  file:
+    path: /apps/go
+    state: absent
+
+- name: Create modulefile for Singularity
+  copy:
+    dest: /opt/Modules/modulefiles/singularity
+    content: |
+      #%Module1.0
+
+      proc ModulesHelp { } {
+          puts stderr "\tThis module makes available commands to run Singularity\n"
+      }
+
+      module-whatis   "Sets up the Singularity system in your environment"
+      prepend-path PATH "{{ singularity_prefix }}/{{ singularity_version }}/bin"
+
+- name: Install shpc
+  shell: |
+    mkdir -p /opt/shpc/bin
+    cd /opt/shpc
+    git clone -b {{ shpc_version }} https://github.com/singularityhub/singularity-hpc.git
+    cd singularity-hpc
+    python3 -m venv /opt/shpc-env
+    source /opt/shpc-env/bin/activate
+    pip install -e .[all]
+    ln -s /opt/shpc-env/bin/shpc /opt/shpc/bin/shpc
+    cp /opt/shpc/singularity-hpc/shpc/settings.yml /opt/shpc/singularity-hpc/shpc/settings-default.yml 
+    cp /opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity.lua /opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity-original.lua
+  args:
+    executable: /bin/bash
+
+- name: Configure shpc settings
+  lineinfile:
+    path: /opt/shpc/singularity-hpc/shpc/settings.yml
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: '^module_base:.*',    line: 'module_base: $HOME/shpc/modules' }
+    - { regexp: '^container_base:.*', line: 'container_base: $HOME/shpc/containers' }
+    - { regexp: '^wrapper_base:.*',   line: 'wrapper_base: $HOME/shpc/wrappers' }
+    - { regexp: '^views_base:.*',     line: 'views_base: $HOME/shpc/views' }
+
+- name: Check if singularity.lua exists
+  stat:
+    path: "/opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity.lua"
+  register: lua_file
+
+- name: Create singularity.lua if it does not exist
+  copy:
+    dest: "/opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity.lua"
+    content: |
+      -- Default content for singularity.lua
+      local moduleDir = subprocess("realpath " .. myFileName()):match("(.*[/])") or "."
+  when: not lua_file.stat.exists
+
+- name: Replace line starting with 'local moduleDir'
+  lineinfile:
+    path: "/opt/shpc/singularity-hpc/shpc/main/modules/templates/singularity.lua"
+    regexp: '^local moduleDir.*'  
+    line: 'local moduleDir = myFileName():match("(.*[/])") or "."' 
+    state: present
+
+- name: Create shpc modulefile
+  copy:
+    dest: "/opt/Modules/modulefiles/shpc"
+    content: |
+      #%Module1.0
+
+      module-whatis   "Singularity HPC"
+      prepend-path PATH "/opt/shpc/bin"
+      if { [ module-info mode load ] } {
+        module load singularity
+      }
+      

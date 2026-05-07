@@ -1,0 +1,118 @@
+---
+- name: Install Java {{ java_version }}
+  apt:
+    name: openjdk-{{ java_version }}-jdk
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Set Java {{ java_version }} as default
+  alternatives:
+    name: java
+    path: /usr/lib/jvm/java-{{ java_version }}-openjdk-amd64/bin/java
+  when: ansible_os_family == "Debian"
+
+- name: Create Nextflow directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "/apps/nextflow/{{ nextflow_version }}/bin"
+    - "/apps/Modules/modulefiles/nextflow"
+
+- name: Download Nextflow
+  get_url:
+    url: https://get.nextflow.io
+    dest: "/apps/nextflow/{{ nextflow_version }}/bin/nextflow"
+    mode: '0755'
+
+- name: Create Nextflow framework and capsule directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "/apps/nextflow/{{ nextflow_version }}/framework"
+    - "/apps/nextflow/{{ nextflow_version }}/capsule"
+
+- name: Pre-download Nextflow core jar into framework and capsule
+  shell: |
+    export NXF_VER={{ nextflow_version }}
+    export NXF_AUTOINSTALL=false
+    export NXF_DIST=/apps/nextflow/{{ nextflow_version }}/framework
+    export CAPSULE_CACHE_DIR=/apps/nextflow/{{ nextflow_version }}/capsule
+    export PATH=/apps/nextflow/{{ nextflow_version }}/bin:${PATH}
+    nextflow -version
+  args:
+    executable: /bin/bash
+  register: nxf_prefetch
+  changed_when: false
+
+- name: Show Nextflow version output
+  debug:
+    var: nxf_prefetch.stdout_lines
+
+- name: Check jar file was downloaded
+  stat:
+    path: "/apps/nextflow/{{ nextflow_version }}/framework/{{ nextflow_version }}/nextflow-{{ nextflow_version }}-one.jar"
+  register: nxf_jar
+  failed_when: not nxf_jar.stat.exists
+
+- name: Set jar file permissions
+  file:
+    path: "/apps/nextflow/{{ nextflow_version }}/framework/{{ nextflow_version }}/nextflow-{{ nextflow_version }}-one.jar"
+    mode: '0664'
+
+- name: Create Nextflow modulefile
+  copy:
+    dest: "/apps/Modules/modulefiles/nextflow/{{ nextflow_version }}"
+    content: |
+      #%Module1.0
+
+      module-whatis "Nextflow {{ nextflow_version }}"
+      prepend-path PATH "/apps/nextflow/{{ nextflow_version }}/bin"
+      setenv NXF_DIST /apps/nextflow/{{ nextflow_version }}/framework
+      setenv CAPSULE_CACHE_DIR /apps/nextflow/{{ nextflow_version }}/capsule
+
+- name: Create nf-core install directory
+  file:
+    path: /apps/nf-core/{{ nfcore_version }}
+    state: directory
+    recurse: yes
+
+- name: Install Python venv dependency
+  apt:
+    name: python3-venv
+    state: present
+    update_cache: yes
+
+- name: Create nf-core venv
+  command: python3 -m venv /apps/nf-core/{{ nfcore_version }}
+  args:
+    creates: /apps/nf-core/{{ nfcore_version }}/bin/activate
+
+- name: Install nf-core
+  command: /apps/nf-core/{{ nfcore_version }}/bin/pip install nf-core=={{ nfcore_version }}
+
+- name: Create symlink for nfcore alias (optional)
+  file:
+    src: /apps/nf-core/{{ nfcore_version }}/bin/nf-core
+    dest: /apps/nf-core/{{ nfcore_version }}/bin/nfcore
+    state: link
+
+- name: Create nf-core modulefile directory
+  file:
+    path: /apps/Modules/modulefiles/nf-core
+    state: directory
+
+- name: Create nf-core modulefile
+  copy:
+    dest: /apps/Modules/modulefiles/nf-core/{{ nfcore_version }}
+    content: |
+      #%Module1.0
+      module-whatis "nf-core {{ nfcore_version }}"
+      prepend-path PATH "/apps/nf-core/{{ nfcore_version }}/bin"
+
+      if { [ module-info mode load ] } {
+          module load nextflow
+      }
+      

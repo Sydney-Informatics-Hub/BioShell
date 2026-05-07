@@ -1,0 +1,26 @@
+---
+- name: Check cvmfs is installed
+  command: which cvmfs2
+  register: cvmfs2_check
+  changed_when: false
+  failed_when: cvmfs2_check.rc != 0
+
+- name: Check config file exists
+  stat:
+    path: /etc/cvmfs/default.local
+  register: cvmfs_config
+  failed_when: not cvmfs_config.stat.exists
+
+- name: Probe repositories
+  command: cvmfs_config probe {{ item }}
+  register: probe_result
+  failed_when: false
+  loop:
+    - data.galaxyproject.org
+    - singularity.galaxyproject.org
+
+- name: Verify cvmfs proxy setting
+  command: grep "CVMFS_HTTP_PROXY" /etc/cvmfs/default.local
+  register: proxy_check
+  changed_when: false
+  failed_when: proxy_check.rc != 0

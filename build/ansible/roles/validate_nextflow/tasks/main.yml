@@ -1,0 +1,25 @@
+---
+- name: Check Nextflow binary exists
+  stat:
+    path: "/apps/nextflow/{{ nextflow_version }}/bin/nextflow"
+  register: nf_bin
+  failed_when: not nf_bin.stat.exists
+
+- name: Check Nextflow is executable
+  command: "/apps/nextflow/{{ nextflow_version }}/bin/nextflow -version"
+  changed_when: false
+  environment:
+    NXF_VER: "{{ nextflow_version }}"
+    NXF_AUTOINSTALL: "false"
+    NXF_DIST: "/tmp/nxf-test"
+    CAPSULE_CACHE_DIR: "/tmp/nxf-capsule"
+
+- name: Check nf-core is installed
+  command: "/apps/nf-core/{{ nfcore_version }}/bin/nf-core --version"
+  changed_when: false
+
+- name: Check Nextflow modulefile exists
+  stat:
+    path: "/apps/Modules/modulefiles/nextflow/{{ nextflow_version }}"
+  register: nf_module
+  failed_when: not nf_module.stat.exists
